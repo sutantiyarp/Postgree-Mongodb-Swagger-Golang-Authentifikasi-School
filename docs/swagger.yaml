@@ -1,0 +1,417 @@
+basePath: /api
+definitions:
+  model.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      is_active:
+        type: boolean
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - username
+    type: object
+  model.ErrorResponse:
+    properties:
+      error:
+        example: Detailed error
+        type: string
+      message:
+        example: Error message
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  model.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.LoginResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/model.UserResponse'
+    type: object
+  model.RegisterRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - username
+    type: object
+  model.SuccessResponse:
+    properties:
+      id:
+        example: 507f1f77bcf86cd799439011
+        type: string
+      message:
+        example: Operation successful
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      is_active:
+        type: boolean
+      password:
+        type: string
+      role_id:
+        type: string
+      username:
+        type: string
+    type: object
+  model.UserDetailResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.UserResponse'
+      message:
+        example: Data user berhasil diambil
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.UserListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.UserResponse'
+        type: array
+      limit:
+        type: integer
+      message:
+        example: Data user berhasil diambil
+        type: string
+      page:
+        type: integer
+      success:
+        example: true
+        type: boolean
+      total:
+        type: integer
+    type: object
+  model.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      role_id:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    name: API Support
+    url: http://localhost:3000
+  description: API untuk mengelola data alumni, user, pekerjaan alumni, dan file dengan
+    MongoDB menggunakan Clean Architecture
+  license:
+    name: MIT
+  title: Alumni Management API
+  version: 1.0.0
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user dengan email dan password, return JWT token
+      parameters:
+      - description: Email dan password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login berhasil
+          schema:
+            $ref: '#/definitions/model.LoginResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Email atau password salah
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Membuat user baru dengan validasi email, username, password, dan
+        full_name
+      parameters:
+      - description: Data registrasi
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User berhasil terdaftar
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Daftar user baru
+      tags:
+      - Auth
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua user dengan pagination
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah data per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User list berhasil diambil
+          schema:
+            $ref: '#/definitions/model.UserListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan semua user (Admin only)
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Admin membuat user baru dengan validasi lengkap
+      parameters:
+      - description: Data user baru
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User berhasil dibuat
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Buat user baru (Admin only)
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Admin dapat menghapus user berdasarkan ID
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User berhasil dihapus
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: User ID tidak valid
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus user (Admin only)
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail user berdasarkan User ID
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data user berhasil diambil
+          schema:
+            $ref: '#/definitions/model.UserDetailResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: User tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan detail user (Admin only)
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Admin dapat update username, email, password, role, atau is_active
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data user yang diupdate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User berhasil diupdate
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: User tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update data user (Admin only)
+      tags:
+      - Users
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
