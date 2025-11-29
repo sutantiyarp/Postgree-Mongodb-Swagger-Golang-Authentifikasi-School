@@ -105,7 +105,6 @@ func Register(c *fiber.Ctx, db *sql.DB) error {
 		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Password minimal 5 karakter dengan uppercase, lowercase, dan number"})
 	}
 
-	// Cek apakah username sudah ada
 	existingUser, err := userRepo.GetUserByUsername(req.Username)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal validasi username", "error": err.Error()})

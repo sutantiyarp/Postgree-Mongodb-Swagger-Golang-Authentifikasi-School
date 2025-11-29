@@ -13,7 +13,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Mock yang memenuhi interface repository.UserRepository (yang ada di app/repository/user_repository.go)
 type mockUserRepo struct {
 	GetUserByUsernameFn func(username string) (*model.User, error)
 	RegisterFn          func(req model.RegisterRequest) (string, error)
@@ -49,7 +48,6 @@ func (m *mockUserRepo) GetUserByUsername(username string) (*model.User, error) {
 	return nil, nil
 }
 
-// ---- methods lain di interface, tapi untuk test Register/Login cukup "stub" ----
 func (m *mockUserRepo) GetUserByEmail(email string) (*model.User, error)                  { return nil, nil }
 func (m *mockUserRepo) GetUserByID(id string) (*model.User, error)                        { return nil, nil }
 func (m *mockUserRepo) GetAllUsers(page, limit int64) ([]model.User, int64, error)        { return nil, 0, nil }
@@ -60,7 +58,6 @@ func (m *mockUserRepo) GetRoleByID(id string) (*model.Role, error)              
 func (m *mockUserRepo) GetRoleByName(name string) (*model.Role, error)                    { return nil, nil }
 func (m *mockUserRepo) GetUserPermissions(userID string) ([]model.Permission, error)      { return nil, nil }
 
-// helpers
 func jsonBody(t *testing.T, v any) *bytes.Reader {
 	t.Helper()
 	b, err := json.Marshal(v)
@@ -79,12 +76,12 @@ func decodeMap(t *testing.T, resp *http.Response) map[string]any {
 	return out
 }
 
-// ===================== REGISTER TESTS =====================
+//REGISTER Test
 
 func TestRegister_Success(t *testing.T) {
 	mock := &mockUserRepo{
 		GetUserByUsernameFn: func(username string) (*model.User, error) {
-			return nil, nil // username belum ada
+			return nil, nil
 		},
 		RegisterFn: func(req model.RegisterRequest) (string, error) {
 			return "user-id-123", nil
@@ -98,7 +95,7 @@ func TestRegister_Success(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/register", jsonBody(t, model.RegisterRequest{
 		Username: "user_1",
 		Email:    "test@example.com",
-		Password: "Abcd1", // minimal 5 char (sesuai service kamu)
+		Password: "Abcd1",
 		FullName: "User One",
 	}))
 	req.Header.Set("Content-Type", "application/json")
@@ -160,7 +157,7 @@ func TestRegister_UsernameAlreadyExists(t *testing.T) {
 }
 
 func TestRegister_InvalidEmail(t *testing.T) {
-	userRepo = &mockUserRepo{} // tidak kepakai karena berhenti di validasi email
+	userRepo = &mockUserRepo{}
 
 	app := fiber.New()
 	app.Post("/register", func(c *fiber.Ctx) error { return Register(c, nil) })
@@ -189,7 +186,7 @@ func TestRegister_InvalidEmail(t *testing.T) {
 }
 
 func TestRegister_InvalidPasswordTooShort(t *testing.T) {
-	userRepo = &mockUserRepo{} // tidak kepakai karena berhenti di validasi password
+	userRepo = &mockUserRepo{}
 
 	app := fiber.New()
 	app.Post("/register", func(c *fiber.Ctx) error { return Register(c, nil) })
@@ -252,7 +249,7 @@ func TestRegister_GetUserByUsernameError(t *testing.T) {
 }
 
 func TestRegister_EmptyPassword(t *testing.T) {
-	userRepo = &mockUserRepo{} // repo tidak kepakai karena fail di validasi required field
+	userRepo = &mockUserRepo{}
 
 	app := fiber.New()
 	app.Post("/register", func(c *fiber.Ctx) error { return Register(c, nil) })
@@ -260,7 +257,7 @@ func TestRegister_EmptyPassword(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/register", jsonBody(t, model.RegisterRequest{
 		Username: "user_1",
 		Email:    "test@example.com",
-		Password: "", // kosong
+		Password: "",
 		FullName: "User One",
 	}))
 	req.Header.Set("Content-Type", "application/json")
@@ -291,7 +288,7 @@ func TestRegister_EmptyFullName(t *testing.T) {
 		Username: "user_1",
 		Email:    "test@example.com",
 		Password: "Abcd1",
-		FullName: "", // kosong
+		FullName: "",
 	}))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -319,7 +316,7 @@ func TestRegister_EmptyEmail(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/register", jsonBody(t, model.RegisterRequest{
 		Username: "user_1",
-		Email:    "", // kosong
+		Email:    "",
 		Password: "Abcd1",
 		FullName: "User One",
 	}))
@@ -342,7 +339,7 @@ func TestRegister_EmptyEmail(t *testing.T) {
 }
 
 
-// ===================== LOGIN TESTS =====================
+//LOGIN Test
 
 func TestLogin_Success(t *testing.T) {
 	mock := &mockUserRepo{
@@ -378,7 +375,6 @@ func TestLogin_Success(t *testing.T) {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
 
-	// service melakukan strings.ToLower(strings.TrimSpace(req.Email))
 	if mock.LastLoginEmail != "test@example.com" {
 		t.Fatalf("expected normalized email 'test@example.com', got %q", mock.LastLoginEmail)
 	}
@@ -399,7 +395,7 @@ func TestLogin_Success(t *testing.T) {
 }
 
 func TestLogin_MissingFields(t *testing.T) {
-	userRepo = &mockUserRepo{} // tidak kepakai karena validasi kosong
+	userRepo = &mockUserRepo{}
 
 	app := fiber.New()
 	app.Post("/login", func(c *fiber.Ctx) error { return Login(c, nil) })

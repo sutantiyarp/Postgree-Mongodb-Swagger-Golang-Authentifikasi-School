@@ -34,7 +34,6 @@ func NewUserRepositoryPostgres(db *sql.DB) *UserRepositoryPostgres {
 	return &UserRepositoryPostgres{db: db}
 }
 
-// Register menambahkan user baru ke database PostgreSQL
 func (r *UserRepositoryPostgres) Register(req model.RegisterRequest) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -88,7 +87,6 @@ func (r *UserRepositoryPostgres) Login(email, password string) (*model.User, err
 	return user, nil
 }
 
-// GetUserByEmail mengambil user berdasarkan email
 func (r *UserRepositoryPostgres) GetUserByEmail(email string) (*model.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -107,7 +105,7 @@ func (r *UserRepositoryPostgres) GetUserByEmail(email string) (*model.User, erro
 		&user.Email,
 		&user.PasswordHash,
 		&user.FullName,
-    	&roleID, // <- ganti dari &user.RoleID
+    	&roleID,
 		&user.IsActive,
 		&user.CreatedAt,
 		&user.UpdatedAt,
@@ -128,7 +126,6 @@ func (r *UserRepositoryPostgres) GetUserByEmail(email string) (*model.User, erro
 	return &user, nil
 }
 
-// GetUserByID mengambil user berdasarkan ID
 func (r *UserRepositoryPostgres) GetUserByID(id string) (*model.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -168,7 +165,6 @@ func (r *UserRepositoryPostgres) GetUserByID(id string) (*model.User, error) {
 	return &user, nil
 }
 
-// GetUserByUsername mengambil user berdasarkan username
 func (r *UserRepositoryPostgres) GetUserByUsername(username string) (*model.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -195,7 +191,7 @@ func (r *UserRepositoryPostgres) GetUserByUsername(username string) (*model.User
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Username belum ada
+			return nil, nil
 		}
 		return nil, fmt.Errorf("gagal query user: %w", err)
 	}
@@ -208,7 +204,6 @@ func (r *UserRepositoryPostgres) GetUserByUsername(username string) (*model.User
 	return &user, nil
 }
 
-// GetAllUsers mengambil semua users dengan pagination
 func (r *UserRepositoryPostgres) GetAllUsers(page, limit int64) ([]model.User, int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -263,7 +258,6 @@ func (r *UserRepositoryPostgres) GetAllUsers(page, limit int64) ([]model.User, i
 	return users, total, rows.Err()
 }
 
-// CreateUser membuat user baru (Admin)
 func (r *UserRepositoryPostgres) CreateUser(req model.CreateUserRequest) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -300,12 +294,10 @@ func (r *UserRepositoryPostgres) CreateUser(req model.CreateUserRequest) (string
 	return userID, nil
 }
 
-// UpdateUser mengupdate data user
 func (r *UserRepositoryPostgres) UpdateUser(id string, req model.UpdateUserRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Build dynamic update query
 	updates := []string{}
 	args := []interface{}{}
 	argIndex := 1
@@ -374,7 +366,6 @@ func (r *UserRepositoryPostgres) UpdateUser(id string, req model.UpdateUserReque
 	return nil
 }
 
-// DeleteUser menghapus user
 func (r *UserRepositoryPostgres) DeleteUser(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -396,7 +387,6 @@ func (r *UserRepositoryPostgres) DeleteUser(id string) error {
 	return nil
 }
 
-// GetRoleByID mengambil role berdasarkan ID
 func (r *UserRepositoryPostgres) GetRoleByID(id string) (*model.Role, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -425,7 +415,6 @@ func (r *UserRepositoryPostgres) GetRoleByID(id string) (*model.Role, error) {
 	return &role, nil
 }
 
-// GetRoleByName mengambil role berdasarkan nama
 func (r *UserRepositoryPostgres) GetRoleByName(name string) (*model.Role, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
