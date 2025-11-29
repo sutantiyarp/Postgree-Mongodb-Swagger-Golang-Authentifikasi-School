@@ -44,11 +44,19 @@ type UserListResponse struct {
 	Limit   int64                 `json:"limit"`
 }
 
-type RoleResponse struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
+type RoleListResponse struct {
+	Success bool     `json:"success" example:"true"`
+	Message string   `json:"message" example:"Data role berhasil diambil"`
+	Data    []Role   `json:"data"`
+	Total   int64    `json:"total"`
+	Page    int64    `json:"page"`
+	Limit   int64    `json:"limit"`
+}
+
+type RoleDetailResponse struct {
+	Success bool  `json:"success" example:"true"`
+	Message string `json:"message" example:"Data role berhasil diambil"`
+	Data    *Role `json:"data,omitempty"`
 }
 
 type StudentResponse struct {

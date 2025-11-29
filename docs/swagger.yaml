@@ -67,6 +67,47 @@ definitions:
     - password
     - username
     type: object
+  model.Role:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  model.RoleDetailResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.Role'
+      message:
+        example: Data role berhasil diambil
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  model.RoleListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Role'
+        type: array
+      limit:
+        type: integer
+      message:
+        example: Data role berhasil diambil
+        type: string
+      page:
+        type: integer
+      success:
+        example: true
+        type: boolean
+      total:
+        type: integer
+    type: object
   model.SuccessResponse:
     properties:
       id:
@@ -220,6 +261,122 @@ paths:
       summary: Daftar user baru
       tags:
       - Auth
+  /roles:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua role dengan pagination
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah data per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role list berhasil diambil
+          schema:
+            $ref: '#/definitions/model.RoleListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan semua role (Admin only)
+      tags:
+      - Roles
+  /roles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail role berdasarkan Role ID
+      parameters:
+      - description: Role ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data role berhasil diambil
+          schema:
+            $ref: '#/definitions/model.RoleDetailResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Role tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan detail role (Admin only)
+      tags:
+      - Roles
+  /roles/byname:
+    get:
+      consumes:
+      - application/json
+      description: 'Contoh: /roles/byname?name=Admin'
+      parameters:
+      - description: 'Role name (misal: Admin)'
+        in: query
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RoleDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan detail role by name (Admin only)
+      tags:
+      - Roles
   /users:
     get:
       consumes:

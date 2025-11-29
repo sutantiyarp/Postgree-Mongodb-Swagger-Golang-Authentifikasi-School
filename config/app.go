@@ -31,11 +31,11 @@ import (
 	"hello-fiber/route"
 	"hello-fiber/middleware"
 	"github.com/gofiber/fiber/v2"
-	"hello-fiber/database"  // Mengimpor package database
+	"hello-fiber/database"
 )
 
 func NewApp() *fiber.App {
-	// Connect to the database
+	// Connect ke database
 	db := database.ConnectDB()
 
 	// Initialize the Fiber application

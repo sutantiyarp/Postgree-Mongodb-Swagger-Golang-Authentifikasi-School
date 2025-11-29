@@ -225,7 +225,6 @@ func GetUserByIDService(c *fiber.Ctx) error {
 
 	user, err := userRepo.GetUserByID(id)
 	if err != nil {
-		// repo kamu pakai error message: "user tidak ditemukan"
 		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
 			return c.Status(404).JSON(fiber.Map{
 				"success": false,

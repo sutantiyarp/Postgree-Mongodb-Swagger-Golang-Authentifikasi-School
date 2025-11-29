@@ -21,8 +21,6 @@ type UserRepository interface {
 	CreateUser(req model.CreateUserRequest) (string, error)
 	UpdateUser(id string, req model.UpdateUserRequest) error
 	DeleteUser(id string) error
-	GetRoleByID(id string) (*model.Role, error)
-	GetRoleByName(name string) (*model.Role, error)
 	GetUserPermissions(userID string) ([]model.Permission, error)
 }
 
@@ -79,7 +77,6 @@ func (r *UserRepositoryPostgres) Login(email, password string) (*model.User, err
 		return nil, errors.New("user tidak aktif")
 	}
 
-	// Validasi password
 	if !utils.CheckPassword(password, user.PasswordHash) {
 		return nil, errors.New("email atau password salah")
 	}
@@ -208,7 +205,6 @@ func (r *UserRepositoryPostgres) GetAllUsers(page, limit int64) ([]model.User, i
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Count total
 	var total int64
 	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM users").Scan(&total)
 	if err != nil {
@@ -385,62 +381,6 @@ func (r *UserRepositoryPostgres) DeleteUser(id string) error {
 	}
 
 	return nil
-}
-
-func (r *UserRepositoryPostgres) GetRoleByID(id string) (*model.Role, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	query := `
-		SELECT id, name, description, created_at
-		FROM roles
-		WHERE id = $1
-	`
-
-	var role model.Role
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&role.ID,
-		&role.Name,
-		&role.Description,
-		&role.CreatedAt,
-	)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("role tidak ditemukan")
-		}
-		return nil, fmt.Errorf("gagal query role: %w", err)
-	}
-
-	return &role, nil
-}
-
-func (r *UserRepositoryPostgres) GetRoleByName(name string) (*model.Role, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	query := `
-		SELECT id, name, description, created_at
-		FROM roles
-		WHERE name = $1
-	`
-
-	var role model.Role
-	err := r.db.QueryRowContext(ctx, query, name).Scan(
-		&role.ID,
-		&role.Name,
-		&role.Description,
-		&role.CreatedAt,
-	)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("role tidak ditemukan")
-		}
-		return nil, fmt.Errorf("gagal query role: %w", err)
-	}
-
-	return &role, nil
 }
 
 func (r *UserRepositoryPostgres) GetUserPermissions(userID string) ([]model.Permission, error) {

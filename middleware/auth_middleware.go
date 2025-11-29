@@ -13,9 +13,9 @@ import (
 )
 
 // JWTAuthMiddleware
-// - membaca header Authorization: Bearer <token>
-// - verifikasi JWT menggunakan utils.Claims dan utils.GetJWTSecret()
-// - simpan user_id, email, role_id ke Locals untuk dipakai handler / middleware lain
+// Membaca header Authorization: Bearer <token>
+// Verifikasi JWT menggunakan utils.Claims dan utils.GetJWTSecret()
+// Simpan user_id, email, role_id ke Locals untuk dipakai handler / middleware lain
 func JWTAuthMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -70,8 +70,7 @@ func JWTAuthMiddleware() fiber.Handler {
 }
 
 // AdminOnlyMiddleware
-// - mengambil role_id dari Locals (hasil JWTAuthMiddleware)
-// - cek ke database apakah role_id tersebut adalah role "Admin"
+// Mengambil role_id dari Locals (hasil JWTAuthMiddleware)
 func AdminOnlyMiddleware(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		roleIDVal := c.Locals("role_id")
@@ -90,9 +89,8 @@ func AdminOnlyMiddleware(db *sql.DB) fiber.Handler {
 			})
 		}
 
-		// Ambil role "Admin" dari PostgreSQL
-		userRepo := repository.NewUserRepositoryPostgres(db)
-		adminRole, err := userRepo.GetRoleByName("Admin")
+		roleRepo := repository.NewRoleRepositoryPostgres(db)
+		adminRole, err := roleRepo.GetRoleByName("Admin")
 		if err != nil {
 			fmt.Printf("[DEBUG] Admin role not found: %v\n", err)
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
