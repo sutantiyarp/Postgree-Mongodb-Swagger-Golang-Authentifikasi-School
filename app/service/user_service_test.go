@@ -18,7 +18,12 @@ type mockUserRepo struct {
 	RegisterFn          func(req model.RegisterRequest) (string, error)
 	LoginFn             func(email, password string) (*model.User, error)
 
-	// capture args (buat assert)
+	GetUserByIDFn  func(id string) (*model.User, error)
+	GetAllUsersFn  func(page, limit int64) ([]model.User, int64, error)
+	CreateUserFn   func(req model.CreateUserRequest) (string, error)
+	UpdateUserFn   func(id string, req model.UpdateUserRequest) error
+	DeleteUserFn   func(id string) error
+
 	LastLoginEmail    string
 	LastLoginPassword string
 	LastRegisterReq   *model.RegisterRequest
@@ -77,7 +82,6 @@ func decodeMap(t *testing.T, resp *http.Response) map[string]any {
 }
 
 //REGISTER Test
-
 func TestRegister_Success(t *testing.T) {
 	mock := &mockUserRepo{
 		GetUserByUsernameFn: func(username string) (*model.User, error) {
@@ -340,7 +344,6 @@ func TestRegister_EmptyEmail(t *testing.T) {
 
 
 //LOGIN Test
-
 func TestLogin_Success(t *testing.T) {
 	mock := &mockUserRepo{
 		LoginFn: func(email, password string) (*model.User, error) {
