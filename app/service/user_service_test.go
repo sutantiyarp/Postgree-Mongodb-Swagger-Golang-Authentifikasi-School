@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	// "net/url"
 	"testing"
 
 	"hello-fiber/app/model"
@@ -21,6 +22,7 @@ type mockUserRepo struct {
 	GetUserByEmailFn func(email string) (*model.User, error)
 	GetUserByIDFn  func(id string) (*model.User, error)
 	GetAllUsersFn  func(page, limit int64) ([]model.User, int64, error)
+	GetUsersByRoleNameFn func(roleName string, page, limit int64) ([]model.User, int64, error)
 	CreateUserFn   func(req model.CreateUserRequest) (string, error)
 	UpdateUserFn   func(id string, req model.UpdateUserRequest) error
 	DeleteUserFn   func(id string) error
@@ -76,6 +78,13 @@ func (m *mockUserRepo) GetUserByID(id string) (*model.User, error) {
 func (m *mockUserRepo) GetAllUsers(page, limit int64) ([]model.User, int64, error) {
 	if m.GetAllUsersFn != nil {
 		return m.GetAllUsersFn(page, limit)
+	}
+	return nil, 0, nil
+}
+
+func (m *mockUserRepo) GetUsersByRoleName(roleName string, page, limit int64) ([]model.User, int64, error) {
+	if m.GetUsersByRoleNameFn != nil {
+		return m.GetUsersByRoleNameFn(roleName, page, limit)
 	}
 	return nil, 0, nil
 }
@@ -688,6 +697,307 @@ func TestGetUserByIDService_RepoError(t *testing.T) {
 		t.Fatalf("unexpected message: %#v", body["message"])
 	}
 }
+
+// func TestGetUserByEmailService_MissingEmail(t *testing.T) {
+// 	userRepo = &mockUserRepo{}
+
+// 	app := fiber.New()
+// 	app.Get("/users/byemail", GetUserByEmailService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byemail", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusBadRequest {
+// 		t.Fatalf("expected 400, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["message"] != "Email harus diisi" {
+// 		t.Fatalf("unexpected message: %#v", body["message"])
+// 	}
+// }
+
+// func TestGetUserByEmailService_InvalidEmail(t *testing.T) {
+// 	userRepo = &mockUserRepo{}
+
+// 	app := fiber.New()
+// 	app.Get("/users/byemail", GetUserByEmailService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byemail?email=bukan-email", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusBadRequest {
+// 		t.Fatalf("expected 400, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["message"] != "Format email tidak valid" {
+// 		t.Fatalf("unexpected message: %#v", body["message"])
+// 	}
+// }
+
+// func TestGetUserByEmailService_NotFound(t *testing.T) {
+// 	mock := &mockUserRepo{
+// 		GetUserByEmailFn: func(email string) (*model.User, error) {
+// 			return nil, errors.New("user tidak ditemukan")
+// 		},
+// 	}
+// 	userRepo = mock
+
+// 	app := fiber.New()
+// 	app.Get("/users/byemail", GetUserByEmailService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byemail?email=test@example.com", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusNotFound {
+// 		t.Fatalf("expected 404, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["message"] != "User tidak ditemukan" {
+// 		t.Fatalf("unexpected message: %#v", body["message"])
+// 	}
+// }
+
+// func TestGetUserByEmailService_Success(t *testing.T) {
+// 	mock := &mockUserRepo{
+// 		GetUserByEmailFn: func(email string) (*model.User, error) {
+// 			// service normalisasi ke lower+trim
+// 			if email != "test@example.com" {
+// 				t.Fatalf("expected email=test@example.com, got %q", email)
+// 			}
+// 			return &model.User{
+// 				ID:       "u1",
+// 				Username: "user1",
+// 				Email:    email,
+// 				FullName: "User One",
+// 				RoleID:   "",
+// 				IsActive: true,
+// 			}, nil
+// 		},
+// 	}
+// 	userRepo = mock
+
+//     app := fiber.New()
+//     app.Get("/users/byemail", GetUserByEmailService)
+
+//     email := url.QueryEscape("  TEST@Example.com  ")
+//     req := httptest.NewRequest(http.MethodGet, "/users/byemail?email="+email, nil)
+
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusOK {
+// 		t.Fatalf("expected 200, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["success"] != true {
+// 		t.Fatalf("expected success=true, got %#v", body["success"])
+// 	}
+// }
+
+// func TestGetUserByUsernameService_MissingUsername(t *testing.T) {
+// 	userRepo = &mockUserRepo{}
+
+// 	app := fiber.New()
+// 	app.Get("/users/byusername", GetUserByUsernameService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byusername", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusBadRequest {
+// 		t.Fatalf("expected 400, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["message"] != "Username harus diisi" {
+// 		t.Fatalf("unexpected message: %#v", body["message"])
+// 	}
+// }
+
+// func TestGetUserByUsernameService_InvalidUsername(t *testing.T) {
+// 	userRepo = &mockUserRepo{}
+
+// 	app := fiber.New()
+// 	app.Get("/users/byusername", GetUserByUsernameService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byusername?username=!!", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusBadRequest {
+// 		t.Fatalf("expected 400, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["message"] != "Username harus 3-50 karakter, hanya alphanumeric dan underscore" {
+// 		t.Fatalf("unexpected message: %#v", body["message"])
+// 	}
+// }
+
+// func TestGetUserByUsernameService_NotFound(t *testing.T) {
+// 	mock := &mockUserRepo{
+// 		GetUserByUsernameFn: func(username string) (*model.User, error) {
+// 			return nil, nil // repo kamu: not found => nil, nil
+// 		},
+// 	}
+// 	userRepo = mock
+
+// 	app := fiber.New()
+// 	app.Get("/users/byusername", GetUserByUsernameService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byusername?username=user_1", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusNotFound {
+// 		t.Fatalf("expected 404, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["message"] != "User tidak ditemukan" {
+// 		t.Fatalf("unexpected message: %#v", body["message"])
+// 	}
+// }
+
+// func TestGetUserByUsernameService_Success(t *testing.T) {
+// 	mock := &mockUserRepo{
+// 		GetUserByUsernameFn: func(username string) (*model.User, error) {
+// 			if username != "user_1" {
+// 				t.Fatalf("expected username=user_1, got %q", username)
+// 			}
+// 			return &model.User{
+// 				ID:       "u1",
+// 				Username: username,
+// 				Email:    "u1@mail.com",
+// 				FullName: "User One",
+// 				RoleID:   "",
+// 				IsActive: true,
+// 			}, nil
+// 		},
+// 	}
+// 	userRepo = mock
+
+// 	app := fiber.New()
+// 	app.Get("/users/byusername", GetUserByUsernameService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byusername?username=user_1", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusOK {
+// 		t.Fatalf("expected 200, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["success"] != true {
+// 		t.Fatalf("expected success=true, got %#v", body["success"])
+// 	}
+// }
+
+// func TestGetUsersByRoleNameService_MissingName(t *testing.T) {
+// 	userRepo = &mockUserRepo{}
+
+// 	app := fiber.New()
+// 	app.Get("/users/byrole", GetUsersByRoleNameService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byrole", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusBadRequest {
+// 		t.Fatalf("expected 400, got %d", resp.StatusCode)
+// 	}
+// }
+
+// func TestGetUsersByRoleNameService_Success(t *testing.T) {
+// 	mock := &mockUserRepo{
+// 		GetUsersByRoleNameFn: func(roleName string, page, limit int64) ([]model.User, int64, error) {
+// 			if roleName != "admin" {
+// 				t.Fatalf("expected roleName=admin, got %q", roleName)
+// 			}
+// 			return []model.User{
+// 				{ID: "u1", Username: "user1", Email: "u1@mail.com", FullName: "User One", RoleID: "role-admin", IsActive: true},
+// 			}, 1, nil
+// 		},
+// 	}
+// 	userRepo = mock
+
+// 	app := fiber.New()
+// 	app.Get("/users/byrole", GetUsersByRoleNameService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byrole?name=admin&page=1&limit=10", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusOK {
+// 		t.Fatalf("expected 200, got %d", resp.StatusCode)
+// 	}
+
+// 	body := decodeMap(t, resp)
+// 	if body["success"] != true {
+// 		t.Fatalf("expected success=true, got %#v", body["success"])
+// 	}
+// }
+
+// func TestGetUsersByRoleNameService_RoleNotFound(t *testing.T) {
+// 	mock := &mockUserRepo{
+// 		GetUsersByRoleNameFn: func(roleName string, page, limit int64) ([]model.User, int64, error) {
+// 			return nil, 0, errors.New("role tidak ditemukan")
+// 		},
+// 	}
+// 	userRepo = mock
+
+// 	app := fiber.New()
+// 	app.Get("/users/byrole", GetUsersByRoleNameService)
+
+// 	req := httptest.NewRequest(http.MethodGet, "/users/byrole?name=unknown", nil)
+// 	resp, err := app.Test(req)
+// 	if err != nil {
+// 		t.Fatalf("app.Test: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusNotFound {
+// 		t.Fatalf("expected 404, got %d", resp.StatusCode)
+// 	}
+// }
 
 //CREATE USER ADMIN Test
 func TestCreateUserAdmin_Success(t *testing.T) {

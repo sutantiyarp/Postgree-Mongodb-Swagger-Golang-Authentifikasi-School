@@ -73,16 +73,16 @@ func toUserResponse(user *model.User) *model.UserResponse {
 }
 
 // Register godoc
-// @Summary Daftar user baru
-// @Description Membuat user baru dengan validasi email, username, password, dan full_name
-// @Tags Auth
+// @Summary Daftar users baru
+// @Description Membuat users baru dengan validasi email, username, password, dan full_name
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param body body model.RegisterRequest true "Data registrasi"
 // @Success 201 {object} model.SuccessResponse "User berhasil terdaftar"
 // @Failure 400 {object} model.ErrorResponse "Validasi gagal"
 // @Failure 500 {object} model.ErrorResponse "Error server"
-// @Router /register [post]
+// @Router /v1/auth/register [post]
 func Register(c *fiber.Ctx, db *sql.DB) error {
 	var req model.RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -122,9 +122,9 @@ func Register(c *fiber.Ctx, db *sql.DB) error {
 }
 
 // Login godoc
-// @Summary Login user
-// @Description Authenticate user dengan email dan password, return JWT token
-// @Tags Auth
+// @Summary Login users
+// @Description Authenticate users dengan email dan password, return JWT token
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param body body model.LoginRequest true "Email dan password"
@@ -132,7 +132,7 @@ func Register(c *fiber.Ctx, db *sql.DB) error {
 // @Failure 400 {object} model.ErrorResponse "Validasi gagal"
 // @Failure 401 {object} model.ErrorResponse "Email atau password salah"
 // @Failure 500 {object} model.ErrorResponse "Error server"
-// @Router /login [post]
+// @Router /v1/auth/login [post]
 func Login(c *fiber.Ctx, db *sql.DB) error {
 	var req model.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -156,52 +156,59 @@ func Login(c *fiber.Ctx, db *sql.DB) error {
 	return c.JSON(fiber.Map{"success": true, "message": "Login berhasil", "token": token, "user": toUserResponse(user)})
 }
 
-// GetAllUsersService godoc
-// @Summary Dapatkan semua user (Admin only)
-// @Description Mengambil daftar semua user dengan pagination
+// GetUserByEmailService godoc
+// @Summary Dapatkan detail user berdasarkan email (Admin)
+// @Description Mengambil detail user berdasarkan email
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Param page query int false "Halaman (default: 1)"
-// @Param limit query int false "Jumlah data per halaman (default: 10)"
-// @Success 200 {object} model.UserListResponse "User list berhasil diambil"
+// @Param email query string true "Email user"
+// @Success 200 {object} model.UserDetailResponse "Data user berhasil diambil"
+// @Failure 400 {object} model.ErrorResponse "Validasi gagal"
 // @Failure 401 {object} model.ErrorResponse "Unauthorized"
+// @Failure 404 {object} model.ErrorResponse "User tidak ditemukan"
 // @Failure 500 {object} model.ErrorResponse "Error server"
-// @Router /users [get]
+// @Router /v1/users/byemail [get]
 // @Security BearerAuth
-func GetAllUsersService(c *fiber.Ctx) error {
-	page := int64(1)
-	limit := int64(10)
+// func GetUserByEmailService(c *fiber.Ctx) error {
+// 	email := strings.ToLower(strings.TrimSpace(c.Query("email")))
+// 	if email == "" {
+// 		return c.Status(400).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Email harus diisi",
+// 		})
+// 	}
+// 	if !isValidEmail(email) {
+// 		return c.Status(400).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Format email tidak valid",
+// 		})
+// 	}
 
-	if p := c.Query("page"); p != "" {
-		page = int64(c.QueryInt("page", 1))
-	}
-	if l := c.Query("limit"); l != "" {
-		limit = int64(c.QueryInt("limit", 10))
-	}
+// 	user, err := userRepo.GetUserByEmail(email)
+// 	if err != nil {
+// 		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+// 			return c.Status(404).JSON(fiber.Map{
+// 				"success": false,
+// 				"message": "User tidak ditemukan",
+// 			})
+// 		}
+// 		return c.Status(500).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Gagal mengambil data user",
+// 			"error":   err.Error(),
+// 		})
+// 	}
 
-	users, total, err := userRepo.GetAllUsers(page, limit)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal mengambil data user", "error": err.Error()})
-	}
-
-	var userResponses []model.UserResponse
-	for _, user := range users {
-		userResponses = append(userResponses, *toUserResponse(&user))
-	}
-
-	return c.JSON(fiber.Map{
-		"success": true,
-		"message": "Data user berhasil diambil",
-		"data":    userResponses,
-		"total":   total,
-		"page":    page,
-		"limit":   limit,
-	})
-}
+// 	return c.JSON(fiber.Map{
+// 		"success": true,
+// 		"message": "Data user berhasil diambil",
+// 		"data":    toUserResponse(user),
+// 	})
+// }
 
 // GetUserByIDService godoc
-// @Summary Dapatkan detail user (Admin only)
+// @Summary Dapatkan detail user (Admin)
 // @Description Mengambil detail user berdasarkan User ID
 // @Tags Users
 // @Accept json
@@ -212,7 +219,7 @@ func GetAllUsersService(c *fiber.Ctx) error {
 // @Failure 401 {object} model.ErrorResponse "Unauthorized"
 // @Failure 404 {object} model.ErrorResponse "User tidak ditemukan"
 // @Failure 500 {object} model.ErrorResponse "Error server"
-// @Router /users/{id} [get]
+// @Router /v1/users/{id} [get]
 // @Security BearerAuth
 func GetUserByIDService(c *fiber.Ctx) error {
 	id := strings.TrimSpace(c.Params("id"))
@@ -246,10 +253,176 @@ func GetUserByIDService(c *fiber.Ctx) error {
 	})
 }
 
+// GetAllUsersService godoc
+// @Summary Dapatkan semua user (Admin)
+// @Description Mengambil daftar semua user dengan pagination
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param page query int false "Halaman (default: 1)"
+// @Param limit query int false "Jumlah data per halaman (default: 10)"
+// @Success 200 {object} model.UserListResponse "User list berhasil diambil"
+// @Failure 401 {object} model.ErrorResponse "Unauthorized"
+// @Failure 500 {object} model.ErrorResponse "Error server"
+// @Router /v1/users [get]
+// @Security BearerAuth
+func GetAllUsersService(c *fiber.Ctx) error {
+	page := int64(1)
+	limit := int64(10)
+
+	if p := c.Query("page"); p != "" {
+		page = int64(c.QueryInt("page", 1))
+	}
+	if l := c.Query("limit"); l != "" {
+		limit = int64(c.QueryInt("limit", 10))
+	}
+
+	users, total, err := userRepo.GetAllUsers(page, limit)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal mengambil data user", "error": err.Error()})
+	}
+
+	var userResponses []model.UserResponse
+	for _, user := range users {
+		userResponses = append(userResponses, *toUserResponse(&user))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Data user berhasil diambil",
+		"data":    userResponses,
+		"total":   total,
+		"page":    page,
+		"limit":   limit,
+	})
+}
+
+// GetUserByUsernameService godoc
+// @Summary Dapatkan detail users berdasarkan username (Admin)
+// @Description Mengambil detail users berdasarkan username
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param username query string true "Username"
+// @Success 200 {object} model.UserDetailResponse "Data user berhasil diambil"
+// @Failure 400 {object} model.ErrorResponse "Validasi gagal"
+// @Failure 401 {object} model.ErrorResponse "Unauthorized"
+// @Failure 404 {object} model.ErrorResponse "User tidak ditemukan"
+// @Failure 500 {object} model.ErrorResponse "Error server"
+// @Router /v1/users/byusername [get]
+// @Security BearerAuth
+// func GetUserByUsernameService(c *fiber.Ctx) error {
+// 	username := strings.TrimSpace(c.Query("username"))
+// 	if username == "" {
+// 		return c.Status(400).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Username harus diisi",
+// 		})
+// 	}
+// 	if !isValidUsername(username) {
+// 		return c.Status(400).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Username harus 3-50 karakter, hanya alphanumeric dan underscore",
+// 		})
+// 	}
+
+// 	user, err := userRepo.GetUserByUsername(username)
+// 	if err != nil {
+// 		return c.Status(500).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Gagal mengambil data user",
+// 			"error":   err.Error(),
+// 		})
+// 	}
+// 	if user == nil {
+// 		return c.Status(404).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "User tidak ditemukan",
+// 		})
+// 	}
+
+// 	return c.JSON(fiber.Map{
+// 		"success": true,
+// 		"message": "Data user berhasil diambil",
+// 		"data":    toUserResponse(user),
+// 	})
+// }
+
+// GetUsersByRoleNameService godoc
+// @Summary Dapatkan user berdasarkan nama role (Admin)
+// @Description Mengambil daftar user berdasarkan nama role dengan pagination
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param name query string true "Nama role (contoh: admin)"
+// @Param page query int false "Halaman (default: 1)"
+// @Param limit query int false "Jumlah data per halaman (default: 10)"
+// @Success 200 {object} model.UserListResponse "User list berhasil diambil"
+// @Failure 400 {object} model.ErrorResponse "Validasi gagal"
+// @Failure 401 {object} model.ErrorResponse "Unauthorized"
+// @Failure 404 {object} model.ErrorResponse "Role tidak ditemukan"
+// @Failure 500 {object} model.ErrorResponse "Error server"
+// @Router /v1/users/byrole [get]
+// @Security BearerAuth
+// func GetUsersByRoleNameService(c *fiber.Ctx) error {
+// 	roleName := strings.TrimSpace(c.Query("name"))
+// 	if roleName == "" {
+// 		return c.Status(400).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Nama role harus diisi",
+// 		})
+// 	}
+
+// 	page := int64(1)
+// 	limit := int64(10)
+
+// 	if p := c.Query("page"); p != "" {
+// 		page = int64(c.QueryInt("page", 1))
+// 	}
+// 	if l := c.Query("limit"); l != "" {
+// 		limit = int64(c.QueryInt("limit", 10))
+// 	}
+
+// 	users, total, err := userRepo.GetUsersByRoleName(roleName, page, limit)
+// 	if err != nil {
+// 		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+// 			return c.Status(404).JSON(fiber.Map{
+// 				"success": false,
+// 				"message": "Role tidak ditemukan",
+// 			})
+// 		}
+// 		if strings.Contains(strings.ToLower(err.Error()), "harus diisi") {
+// 			return c.Status(400).JSON(fiber.Map{
+// 				"success": false,
+// 				"message": err.Error(),
+// 			})
+// 		}
+
+// 		return c.Status(500).JSON(fiber.Map{
+// 			"success": false,
+// 			"message": "Gagal mengambil data user",
+// 			"error":   err.Error(),
+// 		})
+// 	}
+
+// 	var userResponses []model.UserResponse
+// 	for _, u := range users {
+// 		userResponses = append(userResponses, *toUserResponse(&u))
+// 	}
+
+// 	return c.JSON(fiber.Map{
+// 		"success": true,
+// 		"message": "Data user berhasil diambil",
+// 		"data":    userResponses,
+// 		"total":   total,
+// 		"page":    page,
+// 		"limit":   limit,
+// 	})
+// }
 
 // CreateUserAdmin godoc
-// @Summary Buat user baru (Admin only)
-// @Description Admin membuat user baru dengan validasi lengkap
+// @Summary Buat users baru (Admin)
+// @Description Admin membuat users baru dengan validasi lengkap
 // @Tags Users
 // @Accept json
 // @Produce json
@@ -258,7 +431,7 @@ func GetUserByIDService(c *fiber.Ctx) error {
 // @Failure 400 {object} model.ErrorResponse "Validasi gagal"
 // @Failure 401 {object} model.ErrorResponse "Unauthorized"
 // @Failure 500 {object} model.ErrorResponse "Error server"
-// @Router /users [post]
+// @Router /v1/users [post]
 // @Security BearerAuth
 func CreateUserAdmin(c *fiber.Ctx) error {
 	var req model.CreateUserRequest
@@ -299,7 +472,7 @@ func CreateUserAdmin(c *fiber.Ctx) error {
 }
 
 // UpdateUserService godoc
-// @Summary Update data user (Admin only)
+// @Summary Update data users (Admin)
 // @Description Admin dapat update username, email, password, role, atau is_active
 // @Tags Users
 // @Accept json
@@ -311,7 +484,7 @@ func CreateUserAdmin(c *fiber.Ctx) error {
 // @Failure 401 {object} model.ErrorResponse "Unauthorized"
 // @Failure 404 {object} model.ErrorResponse "User tidak ditemukan"
 // @Failure 500 {object} model.ErrorResponse "Error server"
-// @Router /users/{id} [put]
+// @Router /v1/users/{id} [put]
 // @Security BearerAuth
 func UpdateUserService(c *fiber.Ctx) error {
 	userID := c.Params("id")
@@ -356,8 +529,8 @@ func UpdateUserService(c *fiber.Ctx) error {
 }
 
 // DeleteUserService godoc
-// @Summary Hapus user (Admin only)
-// @Description Admin dapat menghapus user berdasarkan ID
+// @Summary Hapus users (Admin)
+// @Description Admin dapat menghapus users berdasarkan ID
 // @Tags Users
 // @Accept json
 // @Produce json
@@ -366,7 +539,7 @@ func UpdateUserService(c *fiber.Ctx) error {
 // @Failure 400 {object} model.ErrorResponse "User ID tidak valid"
 // @Failure 401 {object} model.ErrorResponse "Unauthorized"
 // @Failure 500 {object} model.ErrorResponse "Error server"
-// @Router /users/{id} [delete]
+// @Router /v1/users/{id} [delete]
 // @Security BearerAuth
 func DeleteUserService(c *fiber.Ctx) error {
 	userID := c.Params("id")

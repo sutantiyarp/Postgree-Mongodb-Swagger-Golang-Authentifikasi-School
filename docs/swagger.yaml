@@ -1,5 +1,63 @@
 basePath: /api
 definitions:
+  model.CreateLecturerRequest:
+    properties:
+      department:
+        type: string
+      lecturer_id:
+        minLength: 5
+        type: string
+      user_id:
+        type: string
+    required:
+    - department
+    - lecturer_id
+    - user_id
+    type: object
+  model.CreatePermissionRequest:
+    properties:
+      action:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      resource:
+        type: string
+    required:
+    - action
+    - name
+    - resource
+    type: object
+  model.CreateRolePermissionRequest:
+    properties:
+      permission_id:
+        type: string
+      role_id:
+        type: string
+    type: object
+  model.CreateRoleRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  model.CreateStudentRequest:
+    properties:
+      academic_year:
+        type: string
+      advisor_id:
+        type: string
+      program_study:
+        type: string
+      student_id:
+        type: string
+      user_id:
+        type: string
+    type: object
   model.CreateUserRequest:
     properties:
       email:
@@ -120,6 +178,49 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.UpdateLecturerRequest:
+    properties:
+      department:
+        type: string
+      lecturer_id:
+        type: string
+    type: object
+  model.UpdatePermissionRequest:
+    properties:
+      action:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      resource:
+        type: string
+    type: object
+  model.UpdateRolePermissionRequest:
+    properties:
+      new_permission_id:
+        type: string
+      new_role_id:
+        type: string
+    type: object
+  model.UpdateRoleRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  model.UpdateStudentRequest:
+    properties:
+      academic_year:
+        type: string
+      advisor_id:
+        type: string
+      program_study:
+        type: string
+      student_id:
+        type: string
+    type: object
   model.UpdateUserRequest:
     properties:
       email:
@@ -196,11 +297,11 @@ info:
   title: Alumni Management API
   version: 1.0.0
 paths:
-  /login:
+  /v1/auth/login:
     post:
       consumes:
       - application/json
-      description: Authenticate user dengan email dan password, return JWT token
+      description: Authenticate users dengan email dan password, return JWT token
       parameters:
       - description: Email dan password
         in: body
@@ -227,14 +328,14 @@ paths:
           description: Error server
           schema:
             $ref: '#/definitions/model.ErrorResponse'
-      summary: Login user
+      summary: Login users
       tags:
-      - Auth
-  /register:
+      - Authentication
+  /v1/auth/register:
     post:
       consumes:
       - application/json
-      description: Membuat user baru dengan validasi email, username, password, dan
+      description: Membuat users baru dengan validasi email, username, password, dan
         full_name
       parameters:
       - description: Data registrasi
@@ -258,10 +359,603 @@ paths:
           description: Error server
           schema:
             $ref: '#/definitions/model.ErrorResponse'
-      summary: Daftar user baru
+      summary: Daftar users baru
       tags:
-      - Auth
-  /roles:
+      - Authentication
+  /v1/lecturers:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua lecturer dengan pagination
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah data per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data lecturer berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan semua lecturer (Admin)
+      tags:
+      - Lecturers
+    post:
+      consumes:
+      - application/json
+      description: Membuat data lecturer baru
+      parameters:
+      - description: Data lecturer
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateLecturerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Lecturer berhasil dibuat
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Buat lecturer (Admin)
+      tags:
+      - Lecturers
+  /v1/lecturers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus lecturer by id
+      parameters:
+      - description: Lecturer ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lecturer berhasil dihapus
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Lecturer tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus lecturer (Admin)
+      tags:
+      - Lecturers
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail lecturer berdasarkan id (UUID)
+      parameters:
+      - description: Lecturer ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data lecturer berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Lecturer tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan lecturer by ID (Admin)
+      tags:
+      - Lecturers
+    put:
+      consumes:
+      - application/json
+      description: Update lecturer by id (partial update)
+      parameters:
+      - description: Lecturer ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Field yang ingin diupdate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateLecturerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lecturer berhasil diupdate
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Lecturer tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update lecturer (Admin)
+      tags:
+      - Lecturers
+  /v1/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua permission dengan pagination
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah data per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data permission berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan semua permission (Admin)
+      tags:
+      - Permissions
+    post:
+      consumes:
+      - application/json
+      description: Admin membuat permission baru
+      parameters:
+      - description: Data permission yang akan dibuat
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Permission berhasil dibuat
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Buat permission baru (Admin)
+      tags:
+      - Permissions
+  /v1/permissions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Admin dapat menghapus permission berdasarkan ID
+      parameters:
+      - description: Permission ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permission berhasil dihapus
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Permission tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus permission (Admin)
+      tags:
+      - Permissions
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail permission berdasarkan ID
+      parameters:
+      - description: Permission ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data permission berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Permission tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan detail permission (Admin)
+      tags:
+      - Permissions
+    put:
+      consumes:
+      - application/json
+      description: Admin mengupdate data permission berdasarkan ID
+      parameters:
+      - description: Permission ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data permission yang akan diupdate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permission berhasil diupdate
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Permission tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update permission (Admin)
+      tags:
+      - Permissions
+  /v1/role-permissions:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar mapping role_id dan permission_id dengan pagination
+        dan filter opsional
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah data per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: Filter role_id (UUID)
+        in: query
+        name: role_id
+        type: string
+      - description: Filter permission_id (UUID)
+        in: query
+        name: permission_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data role_permission berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan semua role_permission (Admin)
+      tags:
+      - RolePermissions
+    post:
+      consumes:
+      - application/json
+      description: Membuat mapping role_id dan permission_id
+      parameters:
+      - description: Data role_permission
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateRolePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: role_permission berhasil dibuat
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal / data sudah ada / foreign key tidak valid
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Tambah role_permission (Admin)
+      tags:
+      - RolePermissions
+  /v1/role-permissions/{role_id}/{permission_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus mapping role_id dan permission_id
+      parameters:
+      - description: Role ID (UUID)
+        in: path
+        name: role_id
+        required: true
+        type: string
+      - description: Permission ID (UUID)
+        in: path
+        name: permission_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: role_permission berhasil dihapus
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: role_permission tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus role_permission (Admin)
+      tags:
+      - RolePermissions
+    put:
+      consumes:
+      - application/json
+      description: Update composite key mapping (role_id, permission_id) menjadi (new_role_id,
+        new_permission_id)
+      parameters:
+      - description: Role ID lama (UUID)
+        in: path
+        name: role_id
+        required: true
+        type: string
+      - description: Permission ID lama (UUID)
+        in: path
+        name: permission_id
+        required: true
+        type: string
+      - description: Data role_permission baru
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateRolePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: role_permission berhasil diupdate
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal / data sudah ada / foreign key tidak valid
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: role_permission tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update role_permission (Admin)
+      tags:
+      - RolePermissions
+  /v1/role-permissions/byrole/{role_id}:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil list permission yang dimiliki oleh role tertentu
+      parameters:
+      - description: Role ID (UUID)
+        in: path
+        name: role_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data permissions milik role berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan daftar permissions milik role (Admin)
+      tags:
+      - RolePermissions
+  /v1/roles:
     get:
       consumes:
       - application/json
@@ -292,10 +986,83 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan semua role (Admin only)
+      summary: Dapatkan semua role (Admin)
       tags:
       - Roles
-  /roles/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Admin membuat role baru
+      parameters:
+      - description: Data role baru
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Role berhasil dibuat
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Buat role baru (Admin)
+      tags:
+      - Roles
+  /v1/roles/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Admin dapat menghapus role berdasarkan ID
+      parameters:
+      - description: Role ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role berhasil dihapus
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Role ID tidak valid
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Role tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus role (Admin)
+      tags:
+      - Roles
     get:
       consumes:
       - application/json
@@ -331,53 +1098,247 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan detail role (Admin only)
+      summary: Dapatkan detail role (Admin)
       tags:
       - Roles
-  /roles/byname:
-    get:
+    put:
       consumes:
       - application/json
-      description: 'Contoh: /roles/byname?name=Admin'
+      description: Admin mengupdate data role berdasarkan ID
       parameters:
-      - description: 'Role name (misal: Admin)'
-        in: query
-        name: name
+      - description: Role ID (UUID)
+        in: path
+        name: id
         required: true
         type: string
+      - description: Data role yang akan diupdate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateRoleRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Role berhasil diupdate
           schema:
-            $ref: '#/definitions/model.RoleDetailResponse'
+            $ref: '#/definitions/model.SuccessResponse'
         "400":
-          description: Bad Request
+          description: Validasi gagal
           schema:
             $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/model.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
         "404":
-          description: Not Found
+          description: Role tidak ditemukan
           schema:
             $ref: '#/definitions/model.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Error server
           schema:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan detail role by name (Admin only)
+      summary: Update role (Admin)
       tags:
       - Roles
-  /users:
+  /v1/students:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua students dengan pagination
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah data per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data student berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan semua students (Admin)
+      tags:
+      - Students
+    post:
+      consumes:
+      - application/json
+      description: Membuat data students baru
+      parameters:
+      - description: Data student
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Student berhasil dibuat
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Buat students (Admin)
+      tags:
+      - Students
+  /v1/students/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus students by id
+      parameters:
+      - description: Student ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Student berhasil dihapus
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Student tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus students (Admin)
+      tags:
+      - Students
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail students berdasarkan id (UUID)
+      parameters:
+      - description: Student ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data student berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Student tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan students by ID (Admin)
+      tags:
+      - Students
+    put:
+      consumes:
+      - application/json
+      description: Update students by id (partial update). Untuk hapus advisor_id,
+        kirim advisor_id = "00000000-0000-0000-0000-000000000000"
+      parameters:
+      - description: Student ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Field yang ingin diupdate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Student berhasil diupdate
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Student tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update students (Admin)
+      tags:
+      - Students
+  /v1/users:
     get:
       consumes:
       - application/json
@@ -408,13 +1369,13 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan semua user (Admin only)
+      summary: Dapatkan semua user (Admin)
       tags:
       - Users
     post:
       consumes:
       - application/json
-      description: Admin membuat user baru dengan validasi lengkap
+      description: Admin membuat users baru dengan validasi lengkap
       parameters:
       - description: Data user baru
         in: body
@@ -443,14 +1404,14 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Buat user baru (Admin only)
+      summary: Buat users baru (Admin)
       tags:
       - Users
-  /users/{id}:
+  /v1/users/{id}:
     delete:
       consumes:
       - application/json
-      description: Admin dapat menghapus user berdasarkan ID
+      description: Admin dapat menghapus users berdasarkan ID
       parameters:
       - description: User ID (UUID)
         in: path
@@ -478,7 +1439,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Hapus user (Admin only)
+      summary: Hapus users (Admin)
       tags:
       - Users
     get:
@@ -516,7 +1477,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan detail user (Admin only)
+      summary: Dapatkan detail user (Admin)
       tags:
       - Users
     put:
@@ -560,7 +1521,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update data user (Admin only)
+      summary: Update data users (Admin)
       tags:
       - Users
 schemes:

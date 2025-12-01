@@ -29,7 +29,6 @@ func (ct *CustomTime) UnmarshalJSON(b []byte) error {
 	
 	var objMap map[string]interface{}
 	if err := json.Unmarshal(b, &objMap); err == nil && len(objMap) > 0 {
-		// If it's an object, extract the value
 		for _, v := range objMap {
 			if strVal, ok := v.(string); ok {
 				s = strVal
@@ -77,6 +76,5 @@ func (ct *CustomTime) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 
-	// Jika semua format gagal, return error terakhir
 	return err
 }

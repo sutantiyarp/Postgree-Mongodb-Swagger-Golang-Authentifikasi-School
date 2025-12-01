@@ -71,4 +71,26 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type CreateRoleRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+}
 
+type UpdateRoleRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type CreatePermissionRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Resource    string `json:"resource" binding:"required"`
+	Action      string `json:"action" binding:"required"`
+	Description string `json:"description"`
+}
+
+type UpdatePermissionRequest struct {
+	Name        string `json:"name"`
+	Resource    string `json:"resource"`
+	Action      string `json:"action"`
+	Description string `json:"description"`
+}

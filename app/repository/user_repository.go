@@ -18,6 +18,7 @@ type UserRepository interface {
 	GetUserByID(id string) (*model.User, error)
 	GetUserByUsername(username string) (*model.User, error)
 	GetAllUsers(page, limit int64) ([]model.User, int64, error)
+	GetUsersByRoleName(roleName string, page, limit int64) ([]model.User, int64, error)
 	CreateUser(req model.CreateUserRequest) (string, error)
 	UpdateUser(id string, req model.UpdateUserRequest) error
 	DeleteUser(id string) error
@@ -252,6 +253,86 @@ func (r *UserRepositoryPostgres) GetAllUsers(page, limit int64) ([]model.User, i
 	}
 
 	return users, total, rows.Err()
+}
+
+func (r *UserRepositoryPostgres) GetUsersByRoleName(roleName string, page, limit int64) ([]model.User, int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	roleName = strings.TrimSpace(roleName)
+	if roleName == "" {
+		return nil, 0, errors.New("nama role harus diisi")
+	}
+
+	// 1) ambil role_id dari nama role
+	var roleID string
+	err := r.db.QueryRowContext(ctx,
+		`SELECT id FROM roles WHERE LOWER(name) = LOWER($1)`,
+		roleName,
+	).Scan(&roleID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, 0, errors.New("role tidak ditemukan")
+		}
+		return nil, 0, fmt.Errorf("gagal get role id: %w", err)
+	}
+
+	// 2) count total user untuk role tsb
+	var total int64
+	err = r.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM users WHERE role_id = $1`,
+		roleID,
+	).Scan(&total)
+	if err != nil {
+		return nil, 0, fmt.Errorf("gagal count users by role: %w", err)
+	}
+
+	offset := (page - 1) * limit
+	query := `
+		SELECT id, username, email, password_hash, full_name, role_id, is_active, created_at, updated_at
+		FROM users
+		WHERE role_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, roleID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("gagal query users by role: %w", err)
+	}
+	defer rows.Close()
+
+	var users []model.User
+	for rows.Next() {
+		var u model.User
+		var roleIDNull sql.NullString
+
+		if err := rows.Scan(
+			&u.ID,
+			&u.Username,
+			&u.Email,
+			&u.PasswordHash,
+			&u.FullName,
+			&roleIDNull,
+			&u.IsActive,
+			&u.CreatedAt,
+			&u.UpdatedAt,
+		); err != nil {
+			return nil, 0, fmt.Errorf("gagal scan user: %w", err)
+		}
+
+		u.RoleID = ""
+		if roleIDNull.Valid {
+			u.RoleID = roleIDNull.String
+		}
+
+		users = append(users, u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("error iterasi users: %w", err)
+	}
+
+	return users, total, nil
 }
 
 func (r *UserRepositoryPostgres) CreateUser(req model.CreateUserRequest) (string, error) {
