@@ -16,21 +16,6 @@ type User struct {
 	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
 }
 
-type Role struct {
-	ID          string    `db:"id" json:"id"`
-	Name        string    `db:"name" json:"name"`
-	Description string    `db:"description" json:"description"`
-	CreatedAt   time.Time `db:"created_at" json:"created_at"`
-}
-
-type Permission struct {
-	ID          string `db:"id" json:"id"`
-	Name        string `db:"name" json:"name"`
-	Resource    string `db:"resource" json:"resource"`
-	Action      string `db:"action" json:"action"`
-	Description string `db:"description" json:"description"`
-}
-
 type UserResponse struct {
 	ID        string    `json:"id"`
 	Username  string    `json:"username"`
@@ -40,13 +25,6 @@ type UserResponse struct {
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type RegisterRequest struct {
-	Username  string `json:"username" binding:"required"`
-	Email     string `json:"email" binding:"required"`
-	Password  string `json:"password" binding:"required"`
-	FullName  string `json:"full_name" binding:"required"`
 }
 
 type CreateUserRequest struct {
@@ -66,31 +44,6 @@ type UpdateUserRequest struct {
 	IsActive *bool  `json:"is_active"`
 }
 
-type LoginRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-type CreateRoleRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-}
-
-type UpdateRoleRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type CreatePermissionRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Resource    string `json:"resource" binding:"required"`
-	Action      string `json:"action" binding:"required"`
-	Description string `json:"description"`
-}
-
-type UpdatePermissionRequest struct {
-	Name        string `json:"name"`
-	Resource    string `json:"resource"`
-	Action      string `json:"action"`
-	Description string `json:"description"`
+type UpdateUserRoleByNameRequest struct {
+	RoleName string `json:"role_name" binding:"required"`
 }

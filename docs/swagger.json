@@ -18,6 +18,460 @@
     "host": "localhost:3000",
     "basePath": "/api",
     "paths": {
+        "/v1/achievement-references": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievements"
+                ],
+                "summary": "Daftar semua achievement references (Postgres)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Halaman (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Jumlah per halaman (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/achievements": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievements"
+                ],
+                "summary": "Daftar semua achievements (Mongo)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Halaman (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Jumlah per halaman (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievements"
+                ],
+                "summary": "Mahasiswa membuat achievement (Mongo) + reference draft (Postgres)",
+                "parameters": [
+                    {
+                        "description": "Data achievement (details mengikuti achievement_type). oneOf examples: competition {competitionName, competitionLevel, rank}, publication {publicationType, publicationTitle, authors, publisher, issn}, organization {organizationName, position, periodStart, periodEnd}, certification {certificationName, issuedBy, certificationNumber, validUntil}, academic {description, score}.",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateAchievementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/achievements/{id}/delete": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievements"
+                ],
+                "summary": "Hard delete achievement (hapus permanen Mongo + reference) untuk status deleted",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Achievement reference ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/achievements/{id}/review": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievements"
+                ],
+                "summary": "Dosen review achievement (submitted -\u003e verified/rejected)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Achievement reference ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status baru",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateAchievementStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/achievements/{id}/soft-delete": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievements"
+                ],
+                "summary": "Mahasiswa menghapus (soft delete) draft achievement reference (draft -\u003e deleted)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Achievement reference ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/achievements/{id}/submit": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievements"
+                ],
+                "summary": "Mahasiswa submit achievement (draft -\u003e submitted)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Achievement reference ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/auth/login": {
             "post": {
                 "description": "Authenticate users dengan email dan password, return JWT token",
@@ -57,6 +511,160 @@
                     },
                     "401": {
                         "description": "Email atau password salah",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error server",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Deactivate user account to invalidate all JWT tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout user",
+                "parameters": [
+                    {
+                        "description": "Token to be logged out",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.LogoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Logout berhasil",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error server",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengambil detail profil user berdasarkan token JWT yang dikirim",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Dapatkan profil user yang sedang login",
+                "responses": {
+                    "200": {
+                        "description": "Profil user berhasil diambil",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserDetailResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized atau token tidak valid",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error server",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Membuat token JWT baru dari token lama yang masih valid",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh JWT token",
+                "parameters": [
+                    {
+                        "description": "Token yang akan direfresh",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token berhasil direfresh",
+                        "schema": {
+                            "$ref": "#/definitions/model.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Request tidak valid",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -1921,9 +2529,119 @@
                     }
                 }
             }
+        },
+        "/v1/users/{id}/role": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Admin dapat mengupdate role user berdasarkan nama role (bukan ID)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user role by role name (Admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data role baru berdasarkan nama",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateUserRoleByNameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role user berhasil diupdate",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User atau Role tidak ditemukan",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error server",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "model.CreateAchievementRequest": {
+            "type": "object",
+            "required": [
+                "achievement_type",
+                "description",
+                "details",
+                "title"
+            ],
+            "properties": {
+                "achievement_type": {
+                    "type": "string",
+                    "enum": [
+                        "academic",
+                        "competition",
+                        "organization",
+                        "publication",
+                        "certification",
+                        "other"
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "object"
+                },
+                "points": {
+                    "type": "number"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "model.CreateLecturerRequest": {
             "type": "object",
             "required": [
@@ -2086,6 +2804,28 @@
                 }
             }
         },
+        "model.LogoutRequest": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "model.RegisterRequest": {
             "type": "object",
             "required": [
@@ -2187,6 +2927,26 @@
                 }
             }
         },
+        "model.UpdateAchievementStatusRequest": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "rejection_note": {
+                    "type": "string",
+                    "example": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "verified",
+                        "rejected"
+                    ],
+                    "example": "verified/rejected"
+                }
+            }
+        },
         "model.UpdateLecturerRequest": {
             "type": "object",
             "properties": {
@@ -2273,6 +3033,17 @@
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UpdateUserRoleByNameRequest": {
+            "type": "object",
+            "required": [
+                "role_name"
+            ],
+            "properties": {
+                "role_name": {
                     "type": "string"
                 }
             }

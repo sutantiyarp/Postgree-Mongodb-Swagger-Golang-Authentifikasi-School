@@ -16,12 +16,12 @@ import (
 // Membaca header Authorization: Bearer <token>
 // Verifikasi JWT menggunakan utils.Claims dan utils.GetJWTSecret()
 // Simpan user_id, email, role_id ke Locals untuk dipakai handler / middleware lain
-func JWTAuthMiddleware() fiber.Handler {
+func JWTAuthMiddleware(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Authorization header is required",
+				"error": "Authorization header dibutuhkan",
 			})
 		}
 
@@ -48,7 +48,7 @@ func JWTAuthMiddleware() fiber.Handler {
 		})
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":  "Invalid or expired token",
+				"error":  "Invalid atau expired token",
 				"detail": err.Error(),
 			})
 		}
@@ -57,6 +57,20 @@ func JWTAuthMiddleware() fiber.Handler {
 		if !ok || !token.Valid {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Invalid token claims",
+			})
+		}
+
+		userRepo := repository.NewUserRepositoryPostgres(db)
+		user, err := userRepo.GetUserByID(claims.UserID)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "user tidak ditemukan",
+			})
+		}
+
+		if !user.IsActive {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Token di matikan, akun tidak aktif",
 			})
 		}
 
@@ -70,7 +84,6 @@ func JWTAuthMiddleware() fiber.Handler {
 }
 
 // AdminOnlyMiddleware
-// Mengambil role_id dari Locals (hasil JWTAuthMiddleware)
 func AdminOnlyMiddleware(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		roleIDVal := c.Locals("role_id")
@@ -109,5 +122,73 @@ func AdminOnlyMiddleware(db *sql.DB) fiber.Handler {
 
 		fmt.Printf("[DEBUG] Admin verification passed!\n")
 		return c.Next()
+	}
+}
+
+// StudentOnlyMiddleware menyimpan student_id ke context untuk handler berikutnya
+func StudentOnlyMiddleware(db *sql.DB) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userIDVal := c.Locals("user_id")
+		if userIDVal == nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Unauthorized",
+			})
+		}
+
+		userIDStr, ok := userIDVal.(string)
+		if !ok || userIDStr == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Unauthorized",
+			})
+		}
+
+		studentRepo := repository.NewStudentRepositoryPostgres(db)
+		st, err := studentRepo.GetStudentByUserID(userIDStr)
+		if err != nil || st == nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Hanya mahasiswa yang dapat mengakses",
+			})
+		}
+
+		// Simpan ke context
+		c.Locals("student_id", st.ID.String())
+		c.Locals("student_uuid", st.ID)
+		c.Locals("student_user_id", st.UserID)
+
+		return c.Next()
+	}
+}
+
+func RequirePermission(db *sql.DB, permName string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		roleIDVal := c.Locals("role_id")
+		roleID, ok := roleIDVal.(string)
+		if roleIDVal == nil || !ok || strings.TrimSpace(roleID) == "" {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Access denied. Role not found",
+			})
+		}
+
+		rpRepo := repository.NewRolePermissionRepositoryPostgres(db)
+		perms, err := rpRepo.GetPermissionsByRoleID(roleID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to load permissions",
+			})
+		}
+
+		for _, p := range perms {
+			// super permission
+			if strings.EqualFold(p.Name, "user:manage") {
+				return c.Next()
+			}
+			if strings.EqualFold(p.Name, permName) {
+				return c.Next()
+			}
+		}
+
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "Access denied. Permission required: " + permName,
+		})
 	}
 }

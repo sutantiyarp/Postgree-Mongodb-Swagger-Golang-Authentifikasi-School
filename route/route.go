@@ -3,8 +3,10 @@ package route
 import (
 	"database/sql"
 	"hello-fiber/app/service"
-	"github.com/gofiber/fiber/v2"
+	"hello-fiber/database"
 	"hello-fiber/middleware"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func SetupRoutes(app *fiber.App, db *sql.DB) {
@@ -14,6 +16,7 @@ func SetupRoutes(app *fiber.App, db *sql.DB) {
 	service.InitRolePermissionService(db)
 	service.InitLecturerService(db)
 	service.InitStudentService(db)
+	service.InitAchievementService(db, database.MongoDB)
 	api := app.Group("/api")
 
 	api.Post("/v1/auth/register", func(c *fiber.Ctx) error {
@@ -22,8 +25,17 @@ func SetupRoutes(app *fiber.App, db *sql.DB) {
 	api.Post("/v1/auth/login", func(c *fiber.Ctx) error {
 		return service.Login(c, db)
 	})
+	api.Post("/v1/auth/refresh", func(c *fiber.Ctx) error {
+		return service.Refresh(c, db)
+	})
+	api.Post("/v1/auth/logout", func(c *fiber.Ctx) error {
+		return service.Logout(c, db)
+	})
+	api.Get("/v1/auth/profile", middleware.JWTAuthMiddleware(db), func(c *fiber.Ctx) error {
+		return service.GetProfileService(c)
+	})
 
-	protected := api.Group("/", middleware.JWTAuthMiddleware())
+	protected := api.Group("/", middleware.JWTAuthMiddleware(db))
 
 	user := protected.Group("/v1/users", middleware.AdminOnlyMiddleware(db))
 	user.Get("/", service.GetAllUsersService)
@@ -33,6 +45,7 @@ func SetupRoutes(app *fiber.App, db *sql.DB) {
 	user.Get("/:id", service.GetUserByIDService)
 	user.Post("/", service.CreateUserAdmin)
 	user.Put("/:id", service.UpdateUserService)
+	user.Put("/:id/role", service.UpdateUserRoleByNameService)
 	user.Delete("/:id", service.DeleteUserService)
 
 	role := protected.Group("/v1/roles", middleware.AdminOnlyMiddleware(db))
@@ -71,4 +84,15 @@ func SetupRoutes(app *fiber.App, db *sql.DB) {
 	student.Post("/", service.CreateStudentService)
 	student.Put("/:id", service.UpdateStudentService)
 	student.Delete("/:id", service.DeleteStudentService)
+
+	achievements := protected.Group("/v1/achievements")
+	achievements.Post("/", middleware.StudentOnlyMiddleware(db), middleware.RequirePermission(db, "achievement:create"), service.CreateAchievementService)
+	achievements.Put("/:id/submit", middleware.StudentOnlyMiddleware(db), middleware.RequirePermission(db, "achievement:update"), service.SubmitAchievementService)
+	achievements.Put("/:id/soft-delete", middleware.StudentOnlyMiddleware(db), middleware.RequirePermission(db, "achievement:update"), service.SoftDeleteAchievementService)
+	achievements.Put("/:id/review", middleware.RequirePermission(db, "achievement:verify"), service.ReviewAchievementService)
+	achievements.Delete("/:id/delete", middleware.RequirePermission(db, "achievement:delete"), service.HardDeleteAchievementService)
+	achievements.Get("/", middleware.RequirePermission(db, "achievement:read"), service.GetAchievementsService)
+
+	achievementRefs := protected.Group("/v1/achievement-references")
+	achievementRefs.Get("/", middleware.RequirePermission(db, "achievement:read"), service.GetAchievementReferencesService)
 }

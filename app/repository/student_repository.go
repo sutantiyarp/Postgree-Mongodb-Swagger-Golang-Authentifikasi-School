@@ -16,6 +16,7 @@ import (
 type StudentRepository interface {
 	GetAllStudents(page, limit int64) ([]model.Student, int64, error)
 	GetStudentByID(id string) (*model.Student, error)
+	GetStudentByUserID(userID string) (*model.Student, error)
 	CreateStudent(req model.CreateStudentRequest) (string, error)
 	UpdateStudent(id string, req model.UpdateStudentRequest) error
 	DeleteStudent(id string) error
@@ -128,6 +129,55 @@ func (r *StudentRepositoryPostgres) GetStudentByID(id string) (*model.Student, e
 			return nil, errors.New("student tidak ditemukan")
 		}
 		return nil, fmt.Errorf("gagal get student by id: %w", err)
+	}
+
+	s.AdvisorID = nil
+	if advisorStr.Valid && strings.TrimSpace(advisorStr.String) != "" {
+		aid, err := uuid.Parse(strings.TrimSpace(advisorStr.String))
+		if err == nil {
+			tmp := aid
+			s.AdvisorID = &tmp
+		}
+	}
+
+	return &s, nil
+}
+
+func (r *StudentRepositoryPostgres) GetStudentByUserID(userID string) (*model.Student, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT
+			id,
+			user_id,
+			student_id,
+			COALESCE(program_study, ''),
+			COALESCE(academic_year, ''),
+			advisor_id::text,
+			created_at
+		FROM students
+		WHERE user_id = $1
+		LIMIT 1
+	`
+
+	var s model.Student
+	var advisorStr sql.NullString
+
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&s.ID,
+		&s.UserID,
+		&s.StudentID,
+		&s.ProgramStudy,
+		&s.AcademicYear,
+		&advisorStr,
+		&s.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("student tidak ditemukan")
+		}
+		return nil, fmt.Errorf("gagal get student by user_id: %w", err)
 	}
 
 	s.AdvisorID = nil

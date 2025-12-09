@@ -13,6 +13,7 @@ import (
 type LecturerRepository interface {
 	GetAllLecturers(page, limit int64) ([]model.Lecturer, int64, error)
 	GetLecturerByID(id string) (*model.Lecturer, error)
+	GetLecturerByUserID(userID string) (*model.Lecturer, error)
 	CreateLecturer(req model.CreateLecturerRequest) (string, error)
 	UpdateLecturer(id string, req model.UpdateLecturerRequest) error
 	DeleteLecturer(id string) error
@@ -82,6 +83,28 @@ func (r *LecturerRepositoryPostgres) GetLecturerByID(id string) (*model.Lecturer
 		return nil, fmt.Errorf("gagal get lecturer by id: %w", err)
 	}
 
+	return &l, nil
+}
+
+func (r *LecturerRepositoryPostgres) GetLecturerByUserID(userID string) (*model.Lecturer, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT id, user_id, lecturer_id, department, created_at
+		FROM lecturers
+		WHERE user_id = $1
+		LIMIT 1
+	`
+
+	var l model.Lecturer
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&l.ID, &l.UserID, &l.LecturerID, &l.Department, &l.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("lecturer tidak ditemukan")
+		}
+		return nil, fmt.Errorf("gagal get lecturer by user_id: %w", err)
+	}
 	return &l, nil
 }
 

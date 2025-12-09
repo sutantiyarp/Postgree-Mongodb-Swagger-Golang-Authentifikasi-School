@@ -1,5 +1,34 @@
 basePath: /api
 definitions:
+  model.CreateAchievementRequest:
+    properties:
+      achievement_type:
+        enum:
+        - academic
+        - competition
+        - organization
+        - publication
+        - certification
+        - other
+        type: string
+      description:
+        type: string
+      details:
+        type: object
+      points:
+        type: number
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    required:
+    - achievement_type
+    - description
+    - details
+    - title
+    type: object
   model.CreateLecturerRequest:
     properties:
       department:
@@ -109,6 +138,20 @@ definitions:
       user:
         $ref: '#/definitions/model.UserResponse'
     type: object
+  model.LogoutRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  model.RefreshTokenRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
   model.RegisterRequest:
     properties:
       email:
@@ -178,6 +221,20 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.UpdateAchievementStatusRequest:
+    properties:
+      rejection_note:
+        example: string
+        type: string
+      status:
+        enum:
+        - verified
+        - rejected
+        example: verified/rejected
+        type: string
+    required:
+    - status
+    type: object
   model.UpdateLecturerRequest:
     properties:
       department:
@@ -235,6 +292,13 @@ definitions:
         type: string
       username:
         type: string
+    type: object
+  model.UpdateUserRoleByNameRequest:
+    properties:
+      role_name:
+        type: string
+    required:
+    - role_name
     type: object
   model.UserDetailResponse:
     properties:
@@ -297,6 +361,301 @@ info:
   title: Alumni Management API
   version: 1.0.0
 paths:
+  /v1/achievement-references:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Halaman (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Jumlah per halaman (default 10)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Daftar semua achievement references (Postgres)
+      tags:
+      - Achievements
+  /v1/achievements:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Halaman (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Jumlah per halaman (default 10)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Daftar semua achievements (Mongo)
+      tags:
+      - Achievements
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 'Data achievement (details mengikuti achievement_type). oneOf
+          examples: competition {competitionName, competitionLevel, rank}, publication
+          {publicationType, publicationTitle, authors, publisher, issn}, organization
+          {organizationName, position, periodStart, periodEnd}, certification {certificationName,
+          issuedBy, certificationNumber, validUntil}, academic {description, score}.'
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateAchievementRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mahasiswa membuat achievement (Mongo) + reference draft (Postgres)
+      tags:
+      - Achievements
+  /v1/achievements/{id}/delete:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Achievement reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Hard delete achievement (hapus permanen Mongo + reference) untuk status
+        deleted
+      tags:
+      - Achievements
+  /v1/achievements/{id}/review:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Achievement reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status baru
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateAchievementStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dosen review achievement (submitted -> verified/rejected)
+      tags:
+      - Achievements
+  /v1/achievements/{id}/soft-delete:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Achievement reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mahasiswa menghapus (soft delete) draft achievement reference (draft
+        -> deleted)
+      tags:
+      - Achievements
+  /v1/achievements/{id}/submit:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Achievement reference ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mahasiswa submit achievement (draft -> submitted)
+      tags:
+      - Achievements
   /v1/auth/login:
     post:
       consumes:
@@ -329,6 +688,103 @@ paths:
           schema:
             $ref: '#/definitions/model.ErrorResponse'
       summary: Login users
+      tags:
+      - Authentication
+  /v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Deactivate user account to invalidate all JWT tokens
+      parameters:
+      - description: Token to be logged out
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout berhasil
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Token tidak valid
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Logout user
+      tags:
+      - Authentication
+  /v1/auth/profile:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail profil user berdasarkan token JWT yang dikirim
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profil user berhasil diambil
+          schema:
+            $ref: '#/definitions/model.UserDetailResponse'
+        "401":
+          description: Unauthorized atau token tidak valid
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dapatkan profil user yang sedang login
+      tags:
+      - Authentication
+  /v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Membuat token JWT baru dari token lama yang masih valid
+      parameters:
+      - description: Token yang akan direfresh
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token berhasil direfresh
+          schema:
+            $ref: '#/definitions/model.LoginResponse'
+        "400":
+          description: Request tidak valid
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Token tidak valid atau expired
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Refresh JWT token
       tags:
       - Authentication
   /v1/auth/register:
@@ -1522,6 +1978,51 @@ paths:
       security:
       - BearerAuth: []
       summary: Update data users (Admin)
+      tags:
+      - Users
+  /v1/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Admin dapat mengupdate role user berdasarkan nama role (bukan ID)
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data role baru berdasarkan nama
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateUserRoleByNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role user berhasil diupdate
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Validasi gagal
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: User atau Role tidak ditemukan
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Error server
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user role by role name (Admin)
       tags:
       - Users
 schemes:

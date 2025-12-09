@@ -1,20 +1,24 @@
 package service
 
 import (
+	"database/sql"
 	"hello-fiber/app/model"
 	"hello-fiber/app/repository"
 	"hello-fiber/utils"
-	"github.com/gofiber/fiber/v2"
 	"regexp"
 	"strings"
 	"unicode"
-	"database/sql"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var userRepo repository.UserRepository
+var rolesRepo repository.RoleRepository
 
 func InitUserService(db *sql.DB) {
     userRepo = repository.NewUserRepositoryPostgres(db)
+    rolesRepo = repository.NewRoleRepositoryPostgres(db)
 }
 
 func isValidEmail(email string) bool {
@@ -40,9 +44,9 @@ func isValidPassword(password string) bool {
 		return false
 	}
 
-	hasUpper := true
-	hasLower := true
-	hasNumber := true
+	hasUpper := false
+	hasLower := false
+	hasNumber := false
 
 	for _, char := range password {
 		if unicode.IsUpper(char) {
@@ -148,12 +152,79 @@ func Login(c *fiber.Ctx, db *sql.DB) error {
 		return c.Status(401).JSON(fiber.Map{"success": false, "message": err.Error()})
 	}
 
+	isActive := true
+	updateReq := model.UpdateUserRequest{
+		IsActive: &isActive,
+	}
+	if err := userRepo.UpdateUser(user.ID, updateReq); err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal update user status", "error": err.Error()})
+	}
+
 	token, err := utils.GenerateJWTPostgres(user)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal membuat token", "error": err.Error()})
 	}
 
 	return c.JSON(fiber.Map{"success": true, "message": "Login berhasil", "token": token, "user": toUserResponse(user)})
+}
+
+// Refresh godoc
+// @Summary Refresh JWT token
+// @Description Membuat token JWT baru dari token lama yang masih valid
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param body body model.RefreshTokenRequest true "Token yang akan direfresh"
+// @Success 200 {object} model.LoginResponse "Token berhasil direfresh"
+// @Failure 400 {object} model.ErrorResponse "Request tidak valid"
+// @Failure 401 {object} model.ErrorResponse "Token tidak valid atau expired"
+// @Failure 500 {object} model.ErrorResponse "Error server"
+// @Router /v1/auth/refresh [post]
+func Refresh(c *fiber.Ctx, db *sql.DB) error {
+	var req model.RefreshTokenRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Request body tidak valid", "error": err.Error()})
+	}
+
+	if req.Token == "" {
+		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Token harus diisi"})
+	}
+
+	// Parse dan validate token signature menggunakan JWT secret
+	token, err := jwt.ParseWithClaims(req.Token, &utils.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrTokenUnverifiable
+		}
+		return utils.GetJWTSecret(), nil
+	})
+
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"success": false, "message": "Token tidak valid atau expired", "error": err.Error()})
+	}
+
+	claims, ok := token.Claims.(*utils.Claims)
+	if !ok || !token.Valid {
+		return c.Status(401).JSON(fiber.Map{"success": false, "message": "Token claims tidak valid"})
+	}
+
+	// Tidak perlu menyimpan token di database, hanya check user status
+	user, err := userRepo.GetUserByID(claims.UserID)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"success": false, "message": "User tidak ditemukan"})
+	}
+
+	if user == nil {
+		return c.Status(401).JSON(fiber.Map{"success": false, "message": "User tidak valid"})
+	}
+
+	// Generate token JWT baru dengan claims baru
+	newToken, err := utils.GenerateJWTPostgres(user)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal membuat token baru", "error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"success": true, "message": "Token berhasil direfresh", "token": newToken, "user": toUserResponse(user)})
 }
 
 // GetUserByEmailService godoc
@@ -552,4 +623,213 @@ func DeleteUserService(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"success": true, "message": "User berhasil dihapus"})
+}
+
+// Logout godoc
+// @Summary Logout user
+// @Description Deactivate user account to invalidate all JWT tokens
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param body body model.LogoutRequest true "Token to be logged out"
+// @Success 200 {object} model.SuccessResponse "Logout berhasil"
+// @Failure 400 {object} model.ErrorResponse "Validasi gagal"
+// @Failure 401 {object} model.ErrorResponse "Token tidak valid"
+// @Failure 500 {object} model.ErrorResponse "Error server"
+// @Router /v1/auth/logout [post]
+func Logout(c *fiber.Ctx, db *sql.DB) error {
+	var req model.LogoutRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Request body tidak valid", "error": err.Error()})
+	}
+
+	if req.Token == "" {
+		return c.Status(400).JSON(fiber.Map{"success": false, "message": "Token harus diisi"})
+	}
+
+	// Parse dan validate token signature
+	token, err := jwt.ParseWithClaims(req.Token, &utils.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrTokenUnverifiable
+		}
+		return utils.GetJWTSecret(), nil
+	})
+
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"success": false, "message": "Token tidak valid atau expired", "error": err.Error()})
+	}
+
+	claims, ok := token.Claims.(*utils.Claims)
+	if !ok || !token.Valid {
+		return c.Status(401).JSON(fiber.Map{"success": false, "message": "Token claims tidak valid"})
+	}
+
+	// Verify user exists
+	user, err := userRepo.GetUserByID(claims.UserID)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"success": false, "message": "User tidak ditemukan"})
+	}
+
+	if user == nil {
+		return c.Status(401).JSON(fiber.Map{"success": false, "message": "User tidak valid"})
+	}
+
+	isActiveFalse := false
+	updateReq := model.UpdateUserRequest{
+		IsActive: &isActiveFalse,
+	}
+
+	if err := userRepo.UpdateUser(claims.UserID, updateReq); err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal logout, error saat update user status", "error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"success": true, "message": "Logout berhasil, token sudah tidak aktif"})
+}
+
+// GetProfileService godoc
+// @Summary Dapatkan profil user yang sedang login
+// @Description Mengambil detail profil user berdasarkan token JWT yang dikirim
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.UserDetailResponse "Profil user berhasil diambil"
+// @Failure 401 {object} model.ErrorResponse "Unauthorized atau token tidak valid"
+// @Failure 500 {object} model.ErrorResponse "Error server"
+// @Router /v1/auth/profile [get]
+// @Security BearerAuth
+func GetProfileService(c *fiber.Ctx) error {
+	userIDVal := c.Locals("user_id")
+	if userIDVal == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "User ID tidak ditemukan dalam token",
+		})
+	}
+
+	userID, ok := userIDVal.(string)
+	if !ok || userID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "User ID tidak valid",
+		})
+	}
+
+	// Get user data from database
+	user, err := userRepo.GetUserByID(userID)
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"message": "User tidak ditemukan",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal mengambil data profil",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Profil user berhasil diambil",
+		"data":    toUserResponse(user),
+	})
+}
+
+// UpdateUserRoleByNameService godoc
+// @Summary Update user role by role name (Admin)
+// @Description Admin dapat mengupdate role user berdasarkan nama role (bukan ID)
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Param body body model.UpdateUserRoleByNameRequest true "Data role baru berdasarkan nama"
+// @Success 200 {object} model.SuccessResponse "Role user berhasil diupdate"
+// @Failure 400 {object} model.ErrorResponse "Validasi gagal"
+// @Failure 401 {object} model.ErrorResponse "Unauthorized"
+// @Failure 404 {object} model.ErrorResponse "User atau Role tidak ditemukan"
+// @Failure 500 {object} model.ErrorResponse "Error server"
+// @Router /v1/users/{id}/role [put]
+// @Security BearerAuth
+func UpdateUserRoleByNameService(c *fiber.Ctx) error {
+	userID := c.Params("id")
+	if userID == "" {
+		return c.Status(400).JSON(fiber.Map{
+			"success": false,
+			"message": "User ID harus diisi",
+		})
+	}
+
+	var req model.UpdateUserRoleByNameRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"success": false,
+			"message": "Request body tidak valid",
+			"error":   err.Error(),
+		})
+	}
+
+	roleName := strings.TrimSpace(req.RoleName)
+	if roleName == "" {
+		return c.Status(400).JSON(fiber.Map{
+			"success": false,
+			"message": "Nama role harus diisi",
+		})
+	}
+
+	// Check if user exists
+	user, err := userRepo.GetUserByID(userID)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"success": false,
+			"message": "User tidak ditemukan",
+			"error":   err.Error(),
+		})
+	}
+	if user == nil {
+		return c.Status(404).JSON(fiber.Map{
+			"success": false,
+			"message": "User tidak ditemukan",
+		})
+	}
+
+	role, err := rolesRepo.GetRoleByName(roleName)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"success": false,
+			"message": "Role tidak ditemukan",
+			"error":   err.Error(),
+		})
+	}
+	if role == nil {
+		return c.Status(404).JSON(fiber.Map{
+			"success": false,
+			"message": "Role tidak ditemukan",
+		})
+	}
+
+	// Update user role with role ID
+	updateReq := model.UpdateUserRequest{
+		RoleID: role.ID,
+	}
+
+	if err := userRepo.UpdateUser(userID, updateReq); err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Gagal mengupdate role user",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Role user berhasil diupdate",
+		"data": fiber.Map{
+			"user_id":   userID,
+			"role_name": role.Name,
+			"role_id":   role.ID,
+		},
+	})
 }

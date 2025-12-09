@@ -36,6 +36,7 @@ import (
 
 func NewApp() *fiber.App {
 	// Connect ke database
+	database.ConnectMongoDB()
 	db := database.ConnectDB()
 
 	// Initialize the Fiber application

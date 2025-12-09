@@ -14,6 +14,7 @@ import (
 type UserRepository interface {
 	Register(req model.RegisterRequest) (string, error)
 	Login(email, password string) (*model.User, error)
+	RefreshToken(userID string) (*model.User, error)
 	GetUserByEmail(email string) (*model.User, error)
 	GetUserByID(id string) (*model.User, error)
 	GetUserByUsername(username string) (*model.User, error)
@@ -74,16 +75,27 @@ func (r *UserRepositoryPostgres) Login(email, password string) (*model.User, err
 		return nil, err
 	}
 
-	if !user.IsActive {
-		return nil, errors.New("user tidak aktif")
-	}
-
 	if !utils.CheckPassword(password, user.PasswordHash) {
 		return nil, errors.New("email atau password salah")
 	}
 
 	return user, nil
 }
+
+func (r *UserRepositoryPostgres) RefreshToken(userID string) (*model.User, error) {
+	userRepo := NewUserRepositoryPostgres(r.db)
+	user, err := userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !user.IsActive {
+		return nil, errors.New("user tidak aktif")
+	}
+
+	return user, nil
+}
+
 
 func (r *UserRepositoryPostgres) GetUserByEmail(email string) (*model.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
