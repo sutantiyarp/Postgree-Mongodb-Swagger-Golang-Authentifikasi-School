@@ -31,7 +31,7 @@ func toLecturerResponse(l *model.Lecturer) *model.LecturerResponse {
 }
 
 // GetAllLecturersService godoc
-// @Summary Dapatkan semua lecturer (Admin)
+// @Summary Dapatkan semua lecturer (Permission: user:manage)
 // @Description Mengambil daftar semua lecturer dengan pagination
 // @Tags Lecturers
 // @Accept json
@@ -72,7 +72,7 @@ func GetAllLecturersService(c *fiber.Ctx) error {
 }
 
 // GetLecturerByIDService godoc
-// @Summary Dapatkan lecturer by ID (Admin)
+// @Summary Dapatkan lecturer by ID (Permission: user:manage)
 // @Description Mengambil detail lecturer berdasarkan id (UUID)
 // @Tags Lecturers
 // @Accept json
@@ -123,7 +123,7 @@ func GetLecturerByIDService(c *fiber.Ctx) error {
 }
 
 // CreateLecturerService godoc
-// @Summary Buat lecturer (Admin)
+// @Summary Buat lecturer (Permission: user:manage)
 // @Description Membuat data lecturer baru
 // @Tags Lecturers
 // @Accept json
@@ -179,7 +179,7 @@ func CreateLecturerService(c *fiber.Ctx) error {
 }
 
 // UpdateLecturerService godoc
-// @Summary Update lecturer (Admin)
+// @Summary Update lecturer (Permission: user:manage)
 // @Description Update lecturer by id (partial update)
 // @Tags Lecturers
 // @Accept json
@@ -254,7 +254,7 @@ func UpdateLecturerService(c *fiber.Ctx) error {
 }
 
 // DeleteLecturerService godoc
-// @Summary Hapus lecturer (Admin)
+// @Summary Hapus lecturer (Permission: user:manage)
 // @Description Menghapus lecturer by id
 // @Tags Lecturers
 // @Accept json

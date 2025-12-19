@@ -26,7 +26,7 @@ func normParam(raw string) string {
 }
 
 // GetAllRolePermissionsService godoc
-// @Summary Dapatkan semua role_permission (Admin)
+// @Summary Dapatkan semua role_permission (Permission: user:manage)
 // @Description Mengambil daftar mapping role_id dan permission_id dengan pagination dan filter opsional
 // @Tags RolePermissions
 // @Accept json
@@ -66,7 +66,7 @@ func GetAllRolePermissionsService(c *fiber.Ctx) error {
 }
 
 // GetRolePermissionDetailService godoc
-// @Summary Dapatkan detail role_permission (Admin)
+// @Summary Dapatkan detail role_permission (Permission: user:manage)
 // @Description Mengambil 1 mapping role_id + permission_id (composite key)
 // @Tags RolePermissions
 // @Accept json
@@ -114,7 +114,7 @@ func GetAllRolePermissionsService(c *fiber.Ctx) error {
 // }
 
 // GetPermissionsByRoleIDService godoc
-// @Summary Dapatkan daftar permissions milik role (Admin)
+// @Summary Dapatkan daftar permissions milik role (Permission: user:manage)
 // @Description Mengambil list permission yang dimiliki oleh role tertentu
 // @Tags RolePermissions
 // @Accept json
@@ -152,7 +152,7 @@ func GetPermissionsByRoleIDService(c *fiber.Ctx) error {
 }
 
 // CreateRolePermissionService godoc
-// @Summary Tambah role_permission (Admin)
+// @Summary Tambah role_permission (Permission: user:manage)
 // @Description Membuat mapping role_id dan permission_id
 // @Tags RolePermissions
 // @Accept json
@@ -202,7 +202,7 @@ func CreateRolePermissionService(c *fiber.Ctx) error {
 }
 
 // UpdateRolePermissionService godoc
-// @Summary Update role_permission (Admin)
+// @Summary Update role_permission (Permission: user:manage)
 // @Description Update composite key mapping (role_id, permission_id) menjadi (new_role_id, new_permission_id)
 // @Tags RolePermissions
 // @Accept json
@@ -281,7 +281,7 @@ func UpdateRolePermissionService(c *fiber.Ctx) error {
 }
 
 // DeleteRolePermissionService godoc
-// @Summary Hapus role_permission (Admin)
+// @Summary Hapus role_permission (Permission: user:manage)
 // @Description Menghapus mapping role_id dan permission_id
 // @Tags RolePermissions
 // @Accept json

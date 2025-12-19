@@ -28,10 +28,10 @@ package config
 
 import (
 	// "database/sql"
-	"hello-fiber/route"
-	"hello-fiber/middleware"
 	"github.com/gofiber/fiber/v2"
 	"hello-fiber/database"
+	"hello-fiber/middleware"
+	"hello-fiber/route"
 )
 
 func NewApp() *fiber.App {
@@ -44,6 +44,9 @@ func NewApp() *fiber.App {
 
 	// Middleware
 	app.Use(middleware.LoggerMiddleware)
+
+	// Serve uploaded files
+	app.Static("/uploads", "./uploads")
 
 	// Set up routes, passing db as a dependency to the route handler
 	route.SetupRoutes(app, db)

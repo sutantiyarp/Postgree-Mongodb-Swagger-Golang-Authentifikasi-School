@@ -78,6 +78,9 @@ func JWTAuthMiddleware(db *sql.DB) fiber.Handler {
 		c.Locals("user_id", claims.UserID)
 		c.Locals("email", claims.Email)
 		c.Locals("role_id", claims.RoleID)
+		if len(claims.Permissions) > 0 {
+			c.Locals("permissions", claims.Permissions)
+		}
 
 		return c.Next()
 	}
@@ -161,6 +164,20 @@ func StudentOnlyMiddleware(db *sql.DB) fiber.Handler {
 
 func RequirePermission(db *sql.DB, permName string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		// Cek permissions dari JWT (cache)
+		if permsVal := c.Locals("permissions"); permsVal != nil {
+			if permSlice, ok := permsVal.([]string); ok && len(permSlice) > 0 {
+				for _, p := range permSlice {
+					if strings.EqualFold(p, "user:manage") || strings.EqualFold(p, permName) {
+						return c.Next()
+					}
+				}
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+					"error": "Access denied. Permission required: " + permName,
+				})
+			}
+		}
+
 		roleIDVal := c.Locals("role_id")
 		roleID, ok := roleIDVal.(string)
 		if roleIDVal == nil || !ok || strings.TrimSpace(roleID) == "" {

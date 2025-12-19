@@ -16,7 +16,7 @@ func InitRepoService(db *sql.DB) {
 }
 
 // GetAllRolesService godoc
-// @Summary Dapatkan semua role (Admin)
+// @Summary Dapatkan semua role (Permission: user:manage)
 // @Description Mengambil daftar semua role dengan pagination
 // @Tags Roles
 // @Accept json
@@ -69,7 +69,7 @@ func GetAllRolesService(c *fiber.Ctx) error {
 }
 
 // GetRoleByIDService godoc
-// @Summary Dapatkan detail role (Admin)
+// @Summary Dapatkan detail role (Permission: user:manage)
 // @Description Mengambil detail role berdasarkan Role ID
 // @Tags Roles
 // @Accept json
@@ -130,13 +130,13 @@ func GetRoleByIDService(c *fiber.Ctx) error {
 }
 
 // GetRoleByNameService godoc
-// @Summary Dapatkan detail role by name (Admin)
-// @Description Contoh: /roles/byname?name=Admin
+// @Summary Dapatkan detail role by name (Permission: user:manage)
+// @Description Contoh: /roles/byname?name=Staff
 // @Tags Roles
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param name query string true "Role name (misal: Admin)"
+// @Param name query string true "Role name (misal: Staff)"
 // @Success 200 {object} model.RoleDetailResponse
 // @Failure 400 {object} model.ErrorResponse
 // @Failure 401 {object} model.ErrorResponse
@@ -162,8 +162,8 @@ func GetRoleByIDService(c *fiber.Ctx) error {
 // }
 
 // CreateRoleService godoc
-// @Summary Buat role baru (Admin)
-// @Description Admin membuat role baru
+// @Summary Buat role baru (Permission: user:manage)
+// @Description Memerlukan permission user:manage untuk membuat role baru
 // @Tags Roles
 // @Accept json
 // @Produce json
@@ -218,8 +218,8 @@ func CreateRoleService(c *fiber.Ctx) error {
 }
 
 // UpdateRoleService godoc
-// @Summary Update role (Admin)
-// @Description Admin mengupdate data role berdasarkan ID
+// @Summary Update role (Permission: user:manage)
+// @Description Memerlukan permission user:manage untuk mengupdate data role berdasarkan ID
 // @Tags Roles
 // @Accept json
 // @Produce json
@@ -279,8 +279,8 @@ func UpdateRoleService(c *fiber.Ctx) error {
 }
 
 // DeleteRoleService godoc
-// @Summary Hapus role (Admin)
-// @Description Admin dapat menghapus role berdasarkan ID
+// @Summary Hapus role (Permission: user:manage)
+// @Description Memerlukan permission user:manage untuk menghapus role berdasarkan ID
 // @Tags Roles
 // @Accept json
 // @Produce json

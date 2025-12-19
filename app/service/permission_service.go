@@ -27,7 +27,7 @@ func normalizePathParam(raw string) string {
 }
 
 // GetAllPermissionsService godoc
-// @Summary Dapatkan semua permission (Admin)
+// @Summary Dapatkan semua permission (Permission: user:manage)
 // @Description Mengambil daftar semua permission dengan pagination
 // @Tags Permissions
 // @Accept json
@@ -70,7 +70,7 @@ func GetAllPermissionsService(c *fiber.Ctx) error {
 }
 
 // GetPermissionByIDService godoc
-// @Summary Dapatkan detail permission (Admin)
+// @Summary Dapatkan detail permission (Permission: user:manage)
 // @Description Mengambil detail permission berdasarkan ID
 // @Tags Permissions
 // @Accept json
@@ -115,8 +115,8 @@ func GetPermissionByIDService(c *fiber.Ctx) error {
 }
 
 // CreatePermissionService godoc
-// @Summary Buat permission baru (Admin)
-// @Description Admin membuat permission baru
+// @Summary Buat permission baru (Permission: user:manage)
+// @Description Memerlukan permission user:manage untuk membuat permission baru
 // @Tags Permissions
 // @Accept json
 // @Produce json
@@ -174,8 +174,8 @@ func CreatePermissionService(c *fiber.Ctx) error {
 }
 
 // UpdatePermissionService godoc
-// @Summary Update permission (Admin)
-// @Description Admin mengupdate data permission berdasarkan ID
+// @Summary Update permission (Permission: user:manage)
+// @Description Memerlukan permission user:manage untuk mengupdate data permission berdasarkan ID
 // @Tags Permissions
 // @Accept json
 // @Produce json
@@ -245,8 +245,8 @@ func UpdatePermissionService(c *fiber.Ctx) error {
 }
 
 // DeletePermissionService godoc
-// @Summary Hapus permission (Admin)
-// @Description Admin dapat menghapus permission berdasarkan ID
+// @Summary Hapus permission (Permission: user:manage)
+// @Description Memerlukan permission user:manage untuk menghapus permission berdasarkan ID
 // @Tags Permissions
 // @Accept json
 // @Produce json

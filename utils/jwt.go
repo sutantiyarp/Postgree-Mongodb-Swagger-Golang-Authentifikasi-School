@@ -24,9 +24,10 @@ func GetJWTSecret() []byte {
 }
 
 type Claims struct {
-	UserID string `json:"user_id"` // Using json tags (not bson) because JWT is JSON Web Token
-	Email  string `json:"email"`
-	RoleID string `json:"role_id"` // Changed from int to string to store ObjectID hex
+	UserID      string   `json:"user_id"` // Using json tags (not bson) because JWT is JSON Web Token
+	Email       string   `json:"email"`
+	RoleID      string   `json:"role_id"` // Changed from int to string to store ObjectID hex
+	Permissions []string `json:"permissions,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -49,12 +50,14 @@ type Claims struct {
 // 	return token.SignedString(jwtSecret)
 // }
 
-// GenerateJWTPostgres generates a JWT token for user from PostgreSQL
-func GenerateJWTPostgres(user *model.User) (string, error) {
+// GenerateJWTPostgres generates a JWT token for user from PostgreSQL.
+// permissions bersifat opsional; jika tidak diberikan, akan diset kosong.
+func GenerateJWTPostgres(user *model.User, permissions ...string) (string, error) {
 	claims := Claims{
-		UserID: user.ID,
-		Email:  user.Email,
-		RoleID: user.RoleID,
+		UserID:      user.ID,
+		Email:       user.Email,
+		RoleID:      user.RoleID,
+		Permissions: permissions,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

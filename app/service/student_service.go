@@ -33,7 +33,7 @@ func toStudentResponse(s *model.Student) *model.StudentResponse {
 }
 
 // GetAllStudentsService godoc
-// @Summary Dapatkan semua students (Admin)
+// @Summary Dapatkan semua students (Permission: user:manage)
 // @Description Mengambil daftar semua students dengan pagination
 // @Tags Students
 // @Accept json
@@ -74,7 +74,7 @@ func GetAllStudentsService(c *fiber.Ctx) error {
 }
 
 // GetStudentByIDService godoc
-// @Summary Dapatkan students by ID (Admin)
+// @Summary Dapatkan students by ID (Permission: user:manage)
 // @Description Mengambil detail students berdasarkan id (UUID)
 // @Tags Students
 // @Accept json
@@ -125,7 +125,7 @@ func GetStudentByIDService(c *fiber.Ctx) error {
 }
 
 // CreateStudentService godoc
-// @Summary Buat students (Admin)
+// @Summary Buat students (Permission: user:manage)
 // @Description Membuat data students baru
 // @Tags Students
 // @Accept json
@@ -182,7 +182,7 @@ func CreateStudentService(c *fiber.Ctx) error {
 }
 
 // UpdateStudentService godoc
-// @Summary Update students (Admin)
+// @Summary Update students (Permission: user:manage)
 // @Description Update students by id (partial update). Untuk hapus advisor_id, kirim advisor_id = "00000000-0000-0000-0000-000000000000"
 // @Tags Students
 // @Accept json
@@ -258,7 +258,7 @@ func UpdateStudentService(c *fiber.Ctx) error {
 }
 
 // DeleteStudentService godoc
-// @Summary Hapus students (Admin)
+// @Summary Hapus students (Permission: user:manage)
 // @Description Menghapus students by id
 // @Tags Students
 // @Accept json

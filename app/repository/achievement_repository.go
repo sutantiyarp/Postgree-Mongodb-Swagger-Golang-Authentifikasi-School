@@ -55,7 +55,7 @@ func (r *achievementMongoRepository) Create(ctx context.Context, studentID uuid.
 		Title:           strings.TrimSpace(req.Title),
 		Description:     strings.TrimSpace(req.Description),
 		Details:         req.Details,
-		Attachments:     nil,
+		Attachments:     req.Attachments,
 		Tags:            req.Tags,
 		Points:          req.Points,
 		CreatedAt:       now,

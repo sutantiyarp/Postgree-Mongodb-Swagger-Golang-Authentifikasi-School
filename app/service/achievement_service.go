@@ -3,7 +3,11 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +31,78 @@ func InitAchievementService(db *sql.DB, mongoDB *mongo.Database) {
 	achievementRoleRepo = repository.NewRoleRepositoryPostgres(db)
 	achievementStudentRepo = repository.NewStudentRepositoryPostgres(db)
 	achievementLecturerRepo = repository.NewLecturerRepositoryPostgres(db)
+}
+
+// parse multipart payload for achievement create, including attachments.
+func parseMultipartCreateAchievement(c *fiber.Ctx) (*model.CreateAchievementRequest, error) {
+	req := model.CreateAchievementRequest{}
+
+	req.AchievementType = c.FormValue("achievement_type")
+	req.Title = c.FormValue("title")
+	req.Description = c.FormValue("description")
+
+	if detailsStr := c.FormValue("details"); detailsStr != "" {
+		var det map[string]interface{}
+		if err := json.Unmarshal([]byte(detailsStr), &det); err != nil {
+			return nil, fmt.Errorf("details harus JSON: %w", err)
+		}
+		req.Details = det
+	}
+
+	if tagsStr := c.FormValue("tags"); tagsStr != "" {
+		tags := []string{}
+		for _, t := range strings.Split(tagsStr, ",") {
+			if v := strings.TrimSpace(t); v != "" {
+				tags = append(tags, v)
+			}
+		}
+		req.Tags = tags
+	}
+
+	if pointsStr := c.FormValue("points"); pointsStr != "" {
+		p, err := strconv.ParseFloat(pointsStr, 64)
+		if err != nil {
+			return nil, fmt.Errorf("points harus numerik: %w", err)
+		}
+		req.Points = &p
+	}
+
+	form, err := c.MultipartForm()
+	if err == nil && form != nil && form.File != nil {
+		files := form.File["attachments"]
+		if len(files) > 0 {
+			if err := os.MkdirAll("uploads", 0o755); err != nil {
+				return nil, fmt.Errorf("gagal buat folder uploads: %w", err)
+			}
+			for _, fh := range files {
+				if fh.Size > 7*1024*1024 {
+					return nil, fmt.Errorf("ukuran file maksimal 7MB")
+				}
+				ext := strings.ToLower(filepath.Ext(fh.Filename))
+				ctype := fh.Header.Get("Content-Type")
+				if ext != ".pdf" && !strings.EqualFold(strings.ToLower(ctype), "application/pdf") {
+					return nil, fmt.Errorf("hanya file PDF yang diperbolehkan")
+				}
+				storedName := fmt.Sprintf("%d-%s", time.Now().UnixNano(), filepath.Base(fh.Filename))
+				savePath := filepath.Join("uploads", storedName)
+				if err := c.SaveFile(fh, savePath); err != nil {
+					return nil, fmt.Errorf("gagal simpan file %s: %w", fh.Filename, err)
+				}
+				fileType := ctype
+				if fileType == "" {
+					fileType = strings.TrimPrefix(ext, ".")
+				}
+				req.Attachments = append(req.Attachments, model.Attachment{
+					FileName:   fh.Filename,
+					FileURL:    "/" + filepath.ToSlash(savePath),
+					FileType:   fileType,
+					UploadedAt: time.Now(),
+				})
+			}
+		}
+	}
+
+	return &req, nil
 }
 
 // normalizeDetails memastikan tipe data sesuai schema Mongo (misal rank harus int).
@@ -149,19 +225,44 @@ func allowedStatusesByRole(c *fiber.Ctx, roleName string, forAchievements bool) 
 func CreateAchievementService(c *fiber.Ctx) error {
 	studentUUID, ok := c.Locals("student_uuid").(uuid.UUID)
 	if !ok {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"success": false,
-			"message": "Hanya mahasiswa yang dapat mengakses",
-		})
+		userIDVal := c.Locals("user_id")
+		userID, ok := userIDVal.(string)
+		if userIDVal == nil || !ok || strings.TrimSpace(userID) == "" {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"success": false,
+				"message": "User tidak valid",
+			})
+		}
+		st, err := achievementStudentRepo.GetStudentByUserID(userID)
+		if err != nil || st == nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"success": false,
+				"message": "mahasiswa tidak memiliki student_id",
+			})
+		}
+		studentUUID = st.ID
+		c.Locals("student_uuid", studentUUID)
 	}
 
 	var req model.CreateAchievementRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "Request body tidak valid",
-			"error":   err.Error(),
-		})
+	ct := strings.ToLower(c.Get("Content-Type"))
+	if strings.HasPrefix(ct, "multipart/") {
+		parsed, err := parseMultipartCreateAchievement(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": err.Error(),
+			})
+		}
+		req = *parsed
+	} else {
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Request body tidak valid",
+				"error":   err.Error(),
+			})
+		}
 	}
 
 	req.AchievementType = strings.ToLower(strings.TrimSpace(req.AchievementType))

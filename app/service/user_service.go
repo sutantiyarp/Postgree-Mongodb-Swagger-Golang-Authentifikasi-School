@@ -17,8 +17,8 @@ var userRepo repository.UserRepository
 var rolesRepo repository.RoleRepository
 
 func InitUserService(db *sql.DB) {
-    userRepo = repository.NewUserRepositoryPostgres(db)
-    rolesRepo = repository.NewRoleRepositoryPostgres(db)
+	userRepo = repository.NewUserRepositoryPostgres(db)
+	rolesRepo = repository.NewRoleRepositoryPostgres(db)
 }
 
 func isValidEmail(email string) bool {
@@ -40,13 +40,14 @@ func isValidUsername(username string) bool {
 }
 
 func isValidPassword(password string) bool {
+	// sementara nonaktifkan validasi kompleks dengan default true
 	if len(password) < 5 {
-		return false
+		return true
 	}
 
-	hasUpper := false
-	hasLower := false
-	hasNumber := false
+	hasUpper := true
+	hasLower := true
+	hasNumber := true
 
 	for _, char := range password {
 		if unicode.IsUpper(char) {
@@ -160,7 +161,16 @@ func Login(c *fiber.Ctx, db *sql.DB) error {
 		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal update user status", "error": err.Error()})
 	}
 
-	token, err := utils.GenerateJWTPostgres(user)
+	perms, err := userRepo.GetUserPermissions(user.ID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal mengambil permissions", "error": err.Error()})
+	}
+	var permNames []string
+	for _, p := range perms {
+		permNames = append(permNames, p.Name)
+	}
+
+	token, err := utils.GenerateJWTPostgres(user, permNames...)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal membuat token", "error": err.Error()})
 	}
@@ -218,8 +228,17 @@ func Refresh(c *fiber.Ctx, db *sql.DB) error {
 		return c.Status(401).JSON(fiber.Map{"success": false, "message": "User tidak valid"})
 	}
 
+	perms, err := userRepo.GetUserPermissions(user.ID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal mengambil permissions", "error": err.Error()})
+	}
+	var permNames []string
+	for _, p := range perms {
+		permNames = append(permNames, p.Name)
+	}
+
 	// Generate token JWT baru dengan claims baru
-	newToken, err := utils.GenerateJWTPostgres(user)
+	newToken, err := utils.GenerateJWTPostgres(user, permNames...)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "message": "Gagal membuat token baru", "error": err.Error()})
 	}

@@ -16,10 +16,10 @@ const (
 )
 
 type AchievementReference struct {
-	ID                 uuid.UUID `db:"id" json:"id"`
-	StudentID          uuid.UUID `db:"student_id" json:"student_id"`
-	MongoAchievementID string    `db:"mongo_achievement_id" json:"mongo_achievement_id"`
-	Status             string    `db:"status" json:"status"` // draft, submitted, verified, rejected, deleted
+	ID                 uuid.UUID  `db:"id" json:"id"`
+	StudentID          uuid.UUID  `db:"student_id" json:"student_id"`
+	MongoAchievementID string     `db:"mongo_achievement_id" json:"mongo_achievement_id"`
+	Status             string     `db:"status" json:"status"` // draft, submitted, verified, rejected, deleted
 	SubmittedAt        *time.Time `db:"submitted_at" json:"submitted_at"`
 	VerifiedAt         *time.Time `db:"verified_at" json:"verified_at"`
 	VerifiedBy         *uuid.UUID `db:"verified_by" json:"verified_by"`
@@ -30,17 +30,17 @@ type AchievementReference struct {
 
 // MongoDB Achievement Document
 type Achievement struct {
-	ID               bson.ObjectID         `bson:"_id,omitempty" json:"id,omitempty"`
-	StudentID        string                `bson:"studentId" json:"student_id"`
-	AchievementType  string                `bson:"achievementType" json:"achievement_type"` // academic, competition, organization, publication, certification, other
-	Title            string                `bson:"title" json:"title"`
-	Description      string                `bson:"description" json:"description"`
-	Details          map[string]interface{} `bson:"details" json:"details"`
-	Attachments      []Attachment          `bson:"attachments,omitempty" json:"attachments,omitempty"`
-	Tags             []string              `bson:"tags,omitempty" json:"tags,omitempty"`
-	Points           *float64              `bson:"points,omitempty" json:"points,omitempty"`
-	CreatedAt        time.Time             `bson:"createdAt" json:"created_at"`
-	UpdatedAt        time.Time             `bson:"updatedAt" json:"updated_at"`
+	ID              bson.ObjectID          `bson:"_id,omitempty" json:"id,omitempty"`
+	StudentID       string                 `bson:"studentId" json:"student_id"`
+	AchievementType string                 `bson:"achievementType" json:"achievement_type"` // academic, competition, organization, publication, certification, other
+	Title           string                 `bson:"title" json:"title"`
+	Description     string                 `bson:"description" json:"description"`
+	Details         map[string]interface{} `bson:"details" json:"details"`
+	Attachments     []Attachment           `bson:"attachments,omitempty" json:"attachments,omitempty"`
+	Tags            []string               `bson:"tags,omitempty" json:"tags,omitempty"`
+	Points          *float64               `bson:"points,omitempty" json:"points,omitempty"`
+	CreatedAt       time.Time              `bson:"createdAt" json:"created_at"`
+	UpdatedAt       time.Time              `bson:"updatedAt" json:"updated_at"`
 }
 
 type Attachment struct {
@@ -55,6 +55,7 @@ type CreateAchievementRequest struct {
 	Title           string                 `json:"title" validate:"required"`
 	Description     string                 `json:"description" validate:"required"`
 	Details         map[string]interface{} `json:"details" swaggertype:"object" validate:"required"`
+	Attachments     []Attachment           `json:"attachments,omitempty"`
 	Tags            []string               `json:"tags"`
 	Points          *float64               `json:"points"`
 }
@@ -122,8 +123,8 @@ type AchievementDetailsDoc struct {
 }
 
 type AchievementWithReference struct {
-	Achievement Achievement           `json:"achievement"`
-	Reference   AchievementReference  `json:"reference"`
+	Achievement Achievement          `json:"achievement"`
+	Reference   AchievementReference `json:"reference"`
 }
 
 type AchievementStatistics struct {
@@ -134,8 +135,8 @@ type AchievementStatistics struct {
 }
 
 type TopStudent struct {
-	StudentID    uuid.UUID `json:"student_id"`
-	StudentName  string    `json:"student_name"`
-	TotalAchievements int   `json:"total_achievements"`
-	TotalPoints  int       `json:"total_points"`
+	StudentID         uuid.UUID `json:"student_id"`
+	StudentName       string    `json:"student_name"`
+	TotalAchievements int       `json:"total_achievements"`
+	TotalPoints       int       `json:"total_points"`
 }

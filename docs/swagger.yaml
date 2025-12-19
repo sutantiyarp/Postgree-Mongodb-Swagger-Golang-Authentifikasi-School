@@ -1,5 +1,16 @@
 basePath: /api
 definitions:
+  model.Attachment:
+    properties:
+      file_name:
+        type: string
+      file_type:
+        type: string
+      file_url:
+        type: string
+      uploaded_at:
+        type: string
+    type: object
   model.CreateAchievementRequest:
     properties:
       achievement_type:
@@ -11,6 +22,10 @@ definitions:
         - certification
         - other
         type: string
+      attachments:
+        items:
+          $ref: '#/definitions/model.Attachment'
+        type: array
       description:
         type: string
       details:
@@ -481,7 +496,7 @@ paths:
       tags:
       - Achievements
   /v1/achievements/{id}/delete:
-    put:
+    delete:
       consumes:
       - application/json
       parameters:
@@ -850,7 +865,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan semua lecturer (Admin)
+      summary: 'Dapatkan semua lecturer (Permission: user:manage)'
       tags:
       - Lecturers
     post:
@@ -885,7 +900,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Buat lecturer (Admin)
+      summary: 'Buat lecturer (Permission: user:manage)'
       tags:
       - Lecturers
   /v1/lecturers/{id}:
@@ -924,7 +939,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Hapus lecturer (Admin)
+      summary: 'Hapus lecturer (Permission: user:manage)'
       tags:
       - Lecturers
     get:
@@ -963,7 +978,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan lecturer by ID (Admin)
+      summary: 'Dapatkan lecturer by ID (Permission: user:manage)'
       tags:
       - Lecturers
     put:
@@ -1007,7 +1022,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update lecturer (Admin)
+      summary: 'Update lecturer (Permission: user:manage)'
       tags:
       - Lecturers
   /v1/permissions:
@@ -1042,13 +1057,13 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan semua permission (Admin)
+      summary: 'Dapatkan semua permission (Permission: user:manage)'
       tags:
       - Permissions
     post:
       consumes:
       - application/json
-      description: Admin membuat permission baru
+      description: Memerlukan permission user:manage untuk membuat permission baru
       parameters:
       - description: Data permission yang akan dibuat
         in: body
@@ -1077,14 +1092,15 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Buat permission baru (Admin)
+      summary: 'Buat permission baru (Permission: user:manage)'
       tags:
       - Permissions
   /v1/permissions/{id}:
     delete:
       consumes:
       - application/json
-      description: Admin dapat menghapus permission berdasarkan ID
+      description: Memerlukan permission user:manage untuk menghapus permission berdasarkan
+        ID
       parameters:
       - description: Permission ID (UUID)
         in: path
@@ -1116,7 +1132,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Hapus permission (Admin)
+      summary: 'Hapus permission (Permission: user:manage)'
       tags:
       - Permissions
     get:
@@ -1155,13 +1171,14 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan detail permission (Admin)
+      summary: 'Dapatkan detail permission (Permission: user:manage)'
       tags:
       - Permissions
     put:
       consumes:
       - application/json
-      description: Admin mengupdate data permission berdasarkan ID
+      description: Memerlukan permission user:manage untuk mengupdate data permission
+        berdasarkan ID
       parameters:
       - description: Permission ID (UUID)
         in: path
@@ -1199,7 +1216,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update permission (Admin)
+      summary: 'Update permission (Permission: user:manage)'
       tags:
       - Permissions
   /v1/role-permissions:
@@ -1243,7 +1260,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan semua role_permission (Admin)
+      summary: 'Dapatkan semua role_permission (Permission: user:manage)'
       tags:
       - RolePermissions
     post:
@@ -1278,7 +1295,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Tambah role_permission (Admin)
+      summary: 'Tambah role_permission (Permission: user:manage)'
       tags:
       - RolePermissions
   /v1/role-permissions/{role_id}/{permission_id}:
@@ -1322,7 +1339,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Hapus role_permission (Admin)
+      summary: 'Hapus role_permission (Permission: user:manage)'
       tags:
       - RolePermissions
     put:
@@ -1372,7 +1389,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update role_permission (Admin)
+      summary: 'Update role_permission (Permission: user:manage)'
       tags:
       - RolePermissions
   /v1/role-permissions/byrole/{role_id}:
@@ -1408,7 +1425,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan daftar permissions milik role (Admin)
+      summary: 'Dapatkan daftar permissions milik role (Permission: user:manage)'
       tags:
       - RolePermissions
   /v1/roles:
@@ -1442,13 +1459,13 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan semua role (Admin)
+      summary: 'Dapatkan semua role (Permission: user:manage)'
       tags:
       - Roles
     post:
       consumes:
       - application/json
-      description: Admin membuat role baru
+      description: Memerlukan permission user:manage untuk membuat role baru
       parameters:
       - description: Data role baru
         in: body
@@ -1477,14 +1494,15 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Buat role baru (Admin)
+      summary: 'Buat role baru (Permission: user:manage)'
       tags:
       - Roles
   /v1/roles/{id}:
     delete:
       consumes:
       - application/json
-      description: Admin dapat menghapus role berdasarkan ID
+      description: Memerlukan permission user:manage untuk menghapus role berdasarkan
+        ID
       parameters:
       - description: Role ID (UUID)
         in: path
@@ -1516,7 +1534,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Hapus role (Admin)
+      summary: 'Hapus role (Permission: user:manage)'
       tags:
       - Roles
     get:
@@ -1554,13 +1572,14 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan detail role (Admin)
+      summary: 'Dapatkan detail role (Permission: user:manage)'
       tags:
       - Roles
     put:
       consumes:
       - application/json
-      description: Admin mengupdate data role berdasarkan ID
+      description: Memerlukan permission user:manage untuk mengupdate data role berdasarkan
+        ID
       parameters:
       - description: Role ID (UUID)
         in: path
@@ -1598,7 +1617,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update role (Admin)
+      summary: 'Update role (Permission: user:manage)'
       tags:
       - Roles
   /v1/students:
@@ -1633,7 +1652,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan semua students (Admin)
+      summary: 'Dapatkan semua students (Permission: user:manage)'
       tags:
       - Students
     post:
@@ -1668,7 +1687,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Buat students (Admin)
+      summary: 'Buat students (Permission: user:manage)'
       tags:
       - Students
   /v1/students/{id}:
@@ -1707,7 +1726,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Hapus students (Admin)
+      summary: 'Hapus students (Permission: user:manage)'
       tags:
       - Students
     get:
@@ -1746,7 +1765,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Dapatkan students by ID (Admin)
+      summary: 'Dapatkan students by ID (Permission: user:manage)'
       tags:
       - Students
     put:
@@ -1791,7 +1810,7 @@ paths:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update students (Admin)
+      summary: 'Update students (Permission: user:manage)'
       tags:
       - Students
   /v1/users:

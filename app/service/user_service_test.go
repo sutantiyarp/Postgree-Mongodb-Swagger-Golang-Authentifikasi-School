@@ -20,17 +20,17 @@ type mockUserRepo struct {
 	GetUserByUsernameFn func(username string) (*model.User, error)
 	RegisterFn          func(req model.RegisterRequest) (string, error)
 	LoginFn             func(email, password string) (*model.User, error)
-	RefreshTokenFn        func(userID string) (*model.User, error)
+	RefreshTokenFn      func(userID string) (*model.User, error)
 
-	GetUserByEmailFn func(email string) (*model.User, error)
-	GetUserByIDFn  func(id string) (*model.User, error)
-	GetAllUsersFn  func(page, limit int64) ([]model.User, int64, error)
+	GetUserByEmailFn     func(email string) (*model.User, error)
+	GetUserByIDFn        func(id string) (*model.User, error)
+	GetAllUsersFn        func(page, limit int64) ([]model.User, int64, error)
 	GetUsersByRoleNameFn func(roleName string, page, limit int64) ([]model.User, int64, error)
-	CreateUserFn   func(req model.CreateUserRequest) (string, error)
-	UpdateUserFn   func(id string, req model.UpdateUserRequest) error
-	DeleteUserFn   func(id string) error
+	CreateUserFn         func(req model.CreateUserRequest) (string, error)
+	UpdateUserFn         func(id string, req model.UpdateUserRequest) error
+	DeleteUserFn         func(id string) error
 
-	GetAllRolesFn       func(page, limit int64) ([]model.Role, int64, error)
+	GetAllRolesFn        func(page, limit int64) ([]model.Role, int64, error)
 	GetRoleByIDFn        func(id string) (*model.Role, error)
 	GetRoleByNameFn      func(name string) (*model.Role, error)
 	GetUserPermissionsFn func(userID string) ([]model.Permission, error)
@@ -120,10 +120,12 @@ func (m *mockUserRepo) DeleteUser(id string) error {
 	return nil
 }
 
-func (m *mockUserRepo) GetAllRoles(page, limit int64) ([]model.Role, int64, error) { return nil, 0, nil }
-func (m *mockUserRepo) GetRoleByID(id string) (*model.Role, error)                        { return nil, nil }
-func (m *mockUserRepo) GetRoleByName(name string) (*model.Role, error)                    { return nil, nil }
-func (m *mockUserRepo) GetUserPermissions(userID string) ([]model.Permission, error)      { return nil, nil }
+func (m *mockUserRepo) GetAllRoles(page, limit int64) ([]model.Role, int64, error) {
+	return nil, 0, nil
+}
+func (m *mockUserRepo) GetRoleByID(id string) (*model.Role, error)                   { return nil, nil }
+func (m *mockUserRepo) GetRoleByName(name string) (*model.Role, error)               { return nil, nil }
+func (m *mockUserRepo) GetUserPermissions(userID string) ([]model.Permission, error) { return nil, nil }
 
 func jsonBody(t *testing.T, v any) *bytes.Reader {
 	t.Helper()
@@ -270,11 +272,14 @@ func TestRegister_InvalidPasswordTooShort(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", resp.StatusCode)
 	}
 	body := decodeMap(t, resp)
-	if body["message"] != "Password minimal 5 karakter dengan uppercase, lowercase, dan number" {
+	if body["success"] != true {
+		t.Fatalf("expected success=true, got %#v", body["success"])
+	}
+	if body["message"] != "User berhasil didaftarkan" {
 		t.Fatalf("unexpected message: %#v", body["message"])
 	}
 }
@@ -402,7 +407,6 @@ func TestRegister_EmptyEmail(t *testing.T) {
 		t.Fatalf("unexpected message: %#v", body["message"])
 	}
 }
-
 
 //LOGIN Test
 func TestLogin_Success(t *testing.T) {

@@ -203,7 +203,7 @@ const docTemplate = `{
             }
         },
         "/v1/achievements/{id}/delete": {
-            "put": {
+            "delete": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -744,7 +744,7 @@ const docTemplate = `{
                 "tags": [
                     "Lecturers"
                 ],
-                "summary": "Dapatkan semua lecturer (Admin)",
+                "summary": "Dapatkan semua lecturer (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "integer",
@@ -797,7 +797,7 @@ const docTemplate = `{
                 "tags": [
                     "Lecturers"
                 ],
-                "summary": "Buat lecturer (Admin)",
+                "summary": "Buat lecturer (Permission: user:manage)",
                 "parameters": [
                     {
                         "description": "Data lecturer",
@@ -854,7 +854,7 @@ const docTemplate = `{
                 "tags": [
                     "Lecturers"
                 ],
-                "summary": "Dapatkan lecturer by ID (Admin)",
+                "summary": "Dapatkan lecturer by ID (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -914,7 +914,7 @@ const docTemplate = `{
                 "tags": [
                     "Lecturers"
                 ],
-                "summary": "Update lecturer (Admin)",
+                "summary": "Update lecturer (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -982,7 +982,7 @@ const docTemplate = `{
                 "tags": [
                     "Lecturers"
                 ],
-                "summary": "Hapus lecturer (Admin)",
+                "summary": "Hapus lecturer (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1043,7 +1043,7 @@ const docTemplate = `{
                 "tags": [
                     "Permissions"
                 ],
-                "summary": "Dapatkan semua permission (Admin)",
+                "summary": "Dapatkan semua permission (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1086,7 +1086,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Admin membuat permission baru",
+                "description": "Memerlukan permission user:manage untuk membuat permission baru",
                 "consumes": [
                     "application/json"
                 ],
@@ -1096,7 +1096,7 @@ const docTemplate = `{
                 "tags": [
                     "Permissions"
                 ],
-                "summary": "Buat permission baru (Admin)",
+                "summary": "Buat permission baru (Permission: user:manage)",
                 "parameters": [
                     {
                         "description": "Data permission yang akan dibuat",
@@ -1153,7 +1153,7 @@ const docTemplate = `{
                 "tags": [
                     "Permissions"
                 ],
-                "summary": "Dapatkan detail permission (Admin)",
+                "summary": "Dapatkan detail permission (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1203,7 +1203,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Admin mengupdate data permission berdasarkan ID",
+                "description": "Memerlukan permission user:manage untuk mengupdate data permission berdasarkan ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1213,7 +1213,7 @@ const docTemplate = `{
                 "tags": [
                     "Permissions"
                 ],
-                "summary": "Update permission (Admin)",
+                "summary": "Update permission (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1271,7 +1271,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Admin dapat menghapus permission berdasarkan ID",
+                "description": "Memerlukan permission user:manage untuk menghapus permission berdasarkan ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1281,7 +1281,7 @@ const docTemplate = `{
                 "tags": [
                     "Permissions"
                 ],
-                "summary": "Hapus permission (Admin)",
+                "summary": "Hapus permission (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1342,7 +1342,7 @@ const docTemplate = `{
                 "tags": [
                     "RolePermissions"
                 ],
-                "summary": "Dapatkan semua role_permission (Admin)",
+                "summary": "Dapatkan semua role_permission (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1407,7 +1407,7 @@ const docTemplate = `{
                 "tags": [
                     "RolePermissions"
                 ],
-                "summary": "Tambah role_permission (Admin)",
+                "summary": "Tambah role_permission (Permission: user:manage)",
                 "parameters": [
                     {
                         "description": "Data role_permission",
@@ -1464,7 +1464,7 @@ const docTemplate = `{
                 "tags": [
                     "RolePermissions"
                 ],
-                "summary": "Dapatkan daftar permissions milik role (Admin)",
+                "summary": "Dapatkan daftar permissions milik role (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1520,7 +1520,7 @@ const docTemplate = `{
                 "tags": [
                     "RolePermissions"
                 ],
-                "summary": "Update role_permission (Admin)",
+                "summary": "Update role_permission (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1595,7 +1595,7 @@ const docTemplate = `{
                 "tags": [
                     "RolePermissions"
                 ],
-                "summary": "Hapus role_permission (Admin)",
+                "summary": "Hapus role_permission (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1663,7 +1663,7 @@ const docTemplate = `{
                 "tags": [
                     "Roles"
                 ],
-                "summary": "Dapatkan semua role (Admin)",
+                "summary": "Dapatkan semua role (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1705,7 +1705,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Admin membuat role baru",
+                "description": "Memerlukan permission user:manage untuk membuat role baru",
                 "consumes": [
                     "application/json"
                 ],
@@ -1715,7 +1715,7 @@ const docTemplate = `{
                 "tags": [
                     "Roles"
                 ],
-                "summary": "Buat role baru (Admin)",
+                "summary": "Buat role baru (Permission: user:manage)",
                 "parameters": [
                     {
                         "description": "Data role baru",
@@ -1772,7 +1772,7 @@ const docTemplate = `{
                 "tags": [
                     "Roles"
                 ],
-                "summary": "Dapatkan detail role (Admin)",
+                "summary": "Dapatkan detail role (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1821,7 +1821,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Admin mengupdate data role berdasarkan ID",
+                "description": "Memerlukan permission user:manage untuk mengupdate data role berdasarkan ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1831,7 +1831,7 @@ const docTemplate = `{
                 "tags": [
                     "Roles"
                 ],
-                "summary": "Update role (Admin)",
+                "summary": "Update role (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1889,7 +1889,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Admin dapat menghapus role berdasarkan ID",
+                "description": "Memerlukan permission user:manage untuk menghapus role berdasarkan ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1899,7 +1899,7 @@ const docTemplate = `{
                 "tags": [
                     "Roles"
                 ],
-                "summary": "Hapus role (Admin)",
+                "summary": "Hapus role (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1960,7 +1960,7 @@ const docTemplate = `{
                 "tags": [
                     "Students"
                 ],
-                "summary": "Dapatkan semua students (Admin)",
+                "summary": "Dapatkan semua students (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2013,7 +2013,7 @@ const docTemplate = `{
                 "tags": [
                     "Students"
                 ],
-                "summary": "Buat students (Admin)",
+                "summary": "Buat students (Permission: user:manage)",
                 "parameters": [
                     {
                         "description": "Data student",
@@ -2070,7 +2070,7 @@ const docTemplate = `{
                 "tags": [
                     "Students"
                 ],
-                "summary": "Dapatkan students by ID (Admin)",
+                "summary": "Dapatkan students by ID (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -2130,7 +2130,7 @@ const docTemplate = `{
                 "tags": [
                     "Students"
                 ],
-                "summary": "Update students (Admin)",
+                "summary": "Update students (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -2198,7 +2198,7 @@ const docTemplate = `{
                 "tags": [
                     "Students"
                 ],
-                "summary": "Hapus students (Admin)",
+                "summary": "Hapus students (Permission: user:manage)",
                 "parameters": [
                     {
                         "type": "string",
@@ -2605,6 +2605,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.Attachment": {
+            "type": "object",
+            "properties": {
+                "file_name": {
+                    "type": "string"
+                },
+                "file_type": {
+                    "type": "string"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "uploaded_at": {
+                    "type": "string"
+                }
+            }
+        },
         "model.CreateAchievementRequest": {
             "type": "object",
             "required": [
@@ -2624,6 +2641,12 @@ const docTemplate = `{
                         "certification",
                         "other"
                     ]
+                },
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Attachment"
+                    }
                 },
                 "description": {
                     "type": "string"
