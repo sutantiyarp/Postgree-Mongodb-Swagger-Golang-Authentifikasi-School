@@ -342,10 +342,23 @@ func SubmitAchievementService(c *fiber.Ctx) error {
 
 	studentUUID, ok := c.Locals("student_uuid").(uuid.UUID)
 	if !ok {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"success": false,
-			"message": "Hanya mahasiswa yang dapat mengakses",
-		})
+		userIDVal := c.Locals("user_id")
+		userID, ok := userIDVal.(string)
+		if userIDVal == nil || !ok || strings.TrimSpace(userID) == "" {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"success": false,
+				"message": "User tidak valid",
+			})
+		}
+		st, err := achievementStudentRepo.GetStudentByUserID(userID)
+		if err != nil || st == nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"success": false,
+				"message": "mahasiswa tidak memiliki student_id",
+			})
+		}
+		studentUUID = st.ID
+		c.Locals("student_uuid", studentUUID)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
